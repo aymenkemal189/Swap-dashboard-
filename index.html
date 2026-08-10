@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swap Money — Admin Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{
+  --bg:#08090f;--sur:#0d0f1a;--card:#111620;--card2:#161d2a;
+  --border:rgba(255,200,26,.12);--border2:rgba(255,255,255,.05);
+  --gold:#FFD700;--gold2:#FFA500;
+  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;--orange:#f59e0b;
+  --text:#f0f4ff;--muted:#6b7a99;--dim:#2a3347;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;display:flex;min-height:100vh}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* SIDEBAR */
+.sb{width:200px;background:var(--sur);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:50;overflow:hidden}
+.sb-logo{padding:16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sb-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#000}
+.sb-logo-text{font-size:14px;font-weight:800}.sb-logo-text span{color:var(--gold)}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.sb-sec{font-size:8px;font-weight:700;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;padding:8px 6px 4px}
+.sb-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:.15s;width:100%;border:none;background:none;text-align:left;margin-bottom:1px;font-family:var(--font)}
+.sb-btn:hover{background:var(--card);color:var(--text)}
+.sb-btn.active{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.18)}
+.sb-btn svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:8px;font-weight:800;padding:1px 5px;border-radius:8px}
+.sb-foot{padding:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.5s infinite;margin-right:4px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MAIN */
+.main{margin-left:200px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--sur);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.topbar-left h2{font-size:15px;font-weight:800}
+.topbar-left p{font-size:10px;color:var(--muted);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-pill{background:var(--card);border:1px solid var(--border2);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:.15s;font-family:var(--font)}
+.tb-pill:hover{border-color:var(--gold);color:var(--gold)}
+.tb-pill svg{width:13px;height:13px;fill:currentColor}
+.search-wrap{background:var(--card);border:1px solid var(--border2);border-radius:9px;padding:7px 12px;display:flex;align-items:center;gap:7px;width:210px}
+.search-wrap input{background:none;border:none;color:var(--text);font-size:12px;outline:none;width:100%;font-family:var(--font)}
+.search-wrap input::placeholder{color:var(--muted)}
+.search-wrap svg{width:13px;height:13px;fill:var(--muted);flex-shrink:0}
+.content{padding:16px 20px;flex:1}
+
+/* PAGE VIEWS */
+.view{display:none}.view.active{display:block}
+
+/* STAT ROW */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;position:relative;overflow:hidden}
+.stat-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.stat-val{font-size:24px;font-weight:900;color:#fff;line-height:1;font-family:var(--mono)}
+.stat-sub{font-size:10px;margin-top:4px;font-weight:600}
+.stat-sub.up{color:var(--green)}.stat-sub.dn{color:var(--red)}.stat-sub.nu{color:var(--muted)}
+.stat-icon{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.stat-icon svg{width:18px;height:18px;fill:#fff}
+
+/* TIME FILTER */
+.tf-row{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.tf-label{font-size:10px;font-weight:700;color:var(--muted);margin-right:2px}
+.tf-btn{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--card);color:var(--muted);transition:.15s;font-family:var(--font)}
+.tf-btn:hover{border-color:rgba(255,215,0,.3);color:var(--gold)}
+.tf-btn.active{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.35);color:var(--gold)}
+
+/* TABLE CARD */
+.tbl-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.tbl-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.tbl-hdr h3{font-size:13px;font-weight:800}
+.tbl-right{display:flex;gap:7px;align-items:center}
+.tbl-search{background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:5px 11px;color:var(--text);font-size:11px;outline:none;font-family:var(--font);width:160px}
+.tbl-search::placeholder{color:var(--muted)}
+.export-btn{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);color:var(--gold);padding:5px 11px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:var(--font)}
+.tbl-wrap{overflow-x:auto;max-height:480px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+thead{position:sticky;top:0;z-index:5;background:var(--card2)}
+thead th{padding:9px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border2);transition:background .1s}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
+.td-id{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.td-name{font-weight:700}
+.td-bal{font-family:var(--mono);font-weight:700;color:var(--gold)}
+.td-sc{font-family:var(--mono);color:var(--purple)}
+.td-ads{font-family:var(--mono);color:var(--blue)}
+.td-refs{font-family:var(--mono);color:var(--green)}
+.td-date{color:var(--muted);font-size:10px}
+.td-status{padding:2px 8px;border-radius:12px;font-size:9px;font-weight:800;display:inline-block}
+.td-status.pending{background:rgba(245,158,11,.12);color:var(--orange)}
+.td-status.paid{background:rgba(16,185,129,.12);color:var(--green)}
+.td-status.reject{background:rgba(239,68,68,.12);color:var(--red)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+.pg-btns{display:flex;gap:3px}
+.pg-btn{padding:4px 9px;border-radius:5px;background:var(--card2);border:1px solid var(--border2);color:var(--muted);cursor:pointer;font-size:10px;font-weight:700;font-family:var(--font)}
+.pg-btn.active{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:var(--gold)}
+.pg-btn:hover:not(.active){border-color:var(--dim);color:var(--text)}
+
+/* ACTION BTNS */
+.act-btn{padding:4px 9px;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer;border:none;font-family:var(--font);transition:.15s}
+.act-approve{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+.act-approve:hover{background:var(--green);color:#000}
+.act-reject{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.act-reject:hover{background:var(--red);color:#fff}
+.act-edit{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.2)}
+.act-edit:hover{background:var(--gold);color:#000}
+
+/* 2-COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+
+/* BAR CHART */
+.bar-chart{display:flex;flex-direction:column;gap:7px;padding:14px 16px}
+.bc-row{display:flex;align-items:center;gap:8px}
+.bc-label{width:110px;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bc-bg{flex:1;height:7px;background:var(--card2);border-radius:10px;overflow:hidden}
+.bc-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:.8s}
+.bc-val{font-size:10px;font-weight:700;color:var(--gold);font-family:var(--mono);min-width:60px;text-align:right}
+
+/* SUMMARY BOX */
+.sum-box{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:13px;margin-bottom:11px}
+.sum-box h4{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border2)}
+.sum-row:last-child{border-bottom:none}
+.sum-key{font-size:11px;color:var(--muted);font-weight:600}
+.sum-val{font-size:12px;font-weight:800;font-family:var(--mono)}
+
+/* REFERRAL TREE */
+.ref-node{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border-radius:11px;margin-bottom:7px;border-left:3px solid var(--gold)}
+.ref-node.child{margin-left:28px;border-left-color:var(--blue)}
+.ref-node.grandchild{margin-left:56px;border-left-color:var(--purple)}
+.ref-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:#000;flex-shrink:0}
+.ref-av.b{background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff}
+.ref-av.p{background:linear-gradient(135deg,var(--purple),#5b21b6);color:#fff}
+.ref-info h5{font-size:12px;font-weight:800}
+.ref-info p{font-size:10px;color:var(--muted);margin-top:1px}
+.ref-chip{font-size:9px;padding:1px 7px;border-radius:8px;font-weight:800;margin-left:auto}
+.ref-chip.root{background:rgba(255,215,0,.12);color:var(--gold)}
+.ref-chip.ref{background:rgba(59,130,246,.12);color:var(--blue)}
+.ref-chip.sub{background:rgba(139,92,246,.12);color:var(--purple)}
+
+/* PODIUM */
+.podium{display:flex;gap:6px;align-items:flex-end;margin-bottom:14px}
+.pod{flex:1;background:var(--card);border:1px solid var(--border2);border-radius:13px;padding:12px 6px;text-align:center;position:relative}
+.pod.p1{background:linear-gradient(180deg,#201808,#111520);border-color:var(--gold);transform:scale(1.04);z-index:2}
+.pod-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;margin:0 auto 6px}
+.pod.p2 .pod-av{background:linear-gradient(135deg,#b0b8c8,#8899aa)}
+.pod.p3 .pod-av{background:linear-gradient(135deg,#cd7f32,#a0522d);color:#fff}
+.pod-name{font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod-amt{font-size:11px;font-weight:900;color:var(--gold)}
+.pod-tag{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-size:8px;font-weight:900;padding:1px 6px;border-radius:8px}
+
+/* CONFIG */
+.cfg-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+.cfg-card h3{font-size:13px;font-weight:800;margin-bottom:12px}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border2)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-key{font-size:12px;font-weight:700}
+.cfg-desc{font-size:10px;color:var(--muted);margin-top:1px}
+.cfg-inp{background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:12px;font-weight:700;outline:none;font-family:var(--mono);text-align:right;width:120px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:150;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;width:min(460px,92vw);box-shadow:0 20px 50px rgba(0,0,0,.9)}
+.modal-box h3{font-size:15px;font-weight:900;margin-bottom:12px;color:var(--gold)}
+.modal-close{float:right;background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:3px 9px;cursor:pointer;font-size:11px;color:var(--muted);font-family:var(--font)}
+.modal-field{margin-bottom:10px}
+.modal-field label{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:12px;outline:none;font-family:var(--font)}
+.modal-field textarea{resize:vertical;min-height:70px}
+.modal-actions{display:flex;gap:7px;margin-top:14px}
+.m-btn{flex:1;padding:10px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;border:none;font-family:var(--font)}
+.m-btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000}
+.m-btn.secondary{background:var(--card2);border:1px solid var(--border2);color:var(--muted)}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:16px;right:16px;z-index:300;display:flex;flex-direction:column;gap:7px}
+.toast-item{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:10px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;box-shadow:0 8px 22px rgba(0,0,0,.6);animation:toastIn .22s ease;min-width:200px}
+.toast-item.success{border-color:rgba(16,185,129,.35);color:var(--green)}
+.toast-item.error{border-color:rgba(239,68,68,.35);color:var(--red)}
+.toast-item.info{border-color:rgba(255,215,0,.35);color:var(--gold)}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+
+/* LOADING */
+.loading{position:fixed;inset:0;background:rgba(8,9,15,.88);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.loading.show{display:flex}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:12px;color:var(--muted);font-weight:600}
+
+@media(max-width:768px){.sb{width:0;overflow:hidden}.main{margin-left:0}.stat-row{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading"><div class="spinner"></div><p id="loadingTxt">Loading…</p></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- User Modal -->
+<div class="modal-bg" id="userModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('userModal')">✕ Close</button>
+    <h3>👤 User Details</h3>
+    <div id="userModalBody"></div>
+  </div>
+</div>
+
+<!-- Balance Modal -->
+<div class="modal-bg" id="balModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('balModal')">✕ Close</button>
+    <h3>💰 Adjust Balance</h3>
+    <div class="modal-field"><label>User ID</label><input id="adjId" readonly style="color:var(--muted)"></div>
+    <div class="modal-field"><label>Current Balance</label><input id="adjCur" readonly style="color:var(--gold)"></div>
+    <div class="modal-field"><label>New Balance (ETB)</label><input id="adjNew" type="number" placeholder="New amount"></div>
+    <div class="modal-field"><label>Note</label><textarea id="adjNote" placeholder="Optional…"></textarea></div>
+    <div class="modal-actions">
+      <button class="m-btn primary" onclick="submitBalAdj()">Update</button>
+      <button class="m-btn secondary" onclick="closeModal('balModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sb">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">S</div>
+    <div class="sb-logo-text">Swap <span>Admin</span></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec">Overview</div>
+    <button class="sb-btn active" onclick="nav('overview',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard
+    </button>
+    <button class="sb-btn" onclick="nav('analytics',this)">
+      <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>Analytics
+    </button>
+    <div class="sb-sec">Users</div>
+    <button class="sb-btn" onclick="nav('users',this)">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>All Users
+    </button>
+    <button class="sb-btn" onclick="nav('newusers',this)">
+      <svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>New Users
+      <span class="sb-badge" id="newBadge">0</span>
+    </button>
+    <button class="sb-btn" onclick="nav('referrals',this)">
+      <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2z"/></svg>Referral Tree
+    </button>
+    <div class="sb-sec">Finance</div>
+    <button class="sb-btn" onclick="nav('withdrawals',this)">
+      <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9z"/></svg>Withdrawals
+      <span class="sb-badge" id="pendBadge">0</span>
+    </button>
+    <button class="sb-btn" onclick="nav('swapcoin',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87z"/></svg>Swap Coins
+    </button>
+    <div class="sb-sec">Settings</div>
+    <button class="sb-btn" onclick="nav('config',this)">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.56-1.62.94L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Configuration
+    </button>
+  </div>
+  <div class="sb-foot">
+    <span class="live-dot"></span>Auto-sync every <span id="syncIntervalLabel">30</span>s<br>
+    <span id="lastSync" style="color:var(--dim);font-size:9px">Not synced yet</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2 id="pageTitle">Dashboard Overview</h2>
+      <p>Swap Money Admin Panel V3</p>
+    </div>
+    <div class="topbar-right">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" placeholder="Search users, IDs…" oninput="globalSearch(this.value)">
+      </div>
+      <button class="tb-pill" onclick="loadAll()">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Refresh
+      </button>
+      <div class="tb-pill" style="color:var(--green);border-color:rgba(16,185,129,.25)">
+        <span class="live-dot"></span>Live
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════ OVERVIEW ══════ -->
+    <div class="view active" id="view-overview">
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,215,0,.12)"><svg viewBox="0 0 24 24" style="fill:var(--gold)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+          <div class="stat-label">Total Users</div>
+          <div class="stat-val" id="ov-users">—</div>
+          <div class="stat-sub up" id="ov-newu">↑ Loading…</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(16,185,129,.12)"><svg viewBox="0 0 24 24" style="fill:var(--green)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87z"/></svg></div>
+          <div class="stat-label">Total Balance</div>
+          <div class="stat-val" id="ov-bal">—</div>
+          <div class="stat-sub nu" id="ov-avg">Avg: —</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(239,68,68,.12)"><svg viewBox="0 0 24 24" style="fill:var(--red)"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9z"/></svg></div>
+          <div class="stat-label">Pending Withdrawals</div>
+          <div class="stat-val" id="ov-pendWD">—</div>
+          <div class="stat-sub dn" id="ov-pendAmt">— ETB pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(139,92,246,.12)"><svg viewBox="0 0 24 24" style="fill:var(--purple)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></div>
+          <div class="stat-label">Total Swap Coins</div>
+          <div class="stat-val" id="ov-sc">—</div>
+          <div class="stat-sub nu">≈ <span id="ov-scEtb">—</span> ETB</div>
+        </div>
+      </div>
+
+      <div class="tf-row">
+        <span class="tf-label">Period:</span>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
+        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
+        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
+        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
+        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
+        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
+        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+      </div>
+
+      <div class="two-col">
+        <div class="tbl-card">
+          <div class="tbl-hdr"><h3>📅 New Registrations</h3><span id="newRegLabel" style="font-size:11px;color:var(--gold);font-weight:700"></span></div>
+          <div class="tbl-wrap" style="max-height:260px">
+            <table><thead><tr><th>User</th><th>Username</th><th>Joined</th><th>Ref By</th></tr></thead>
+            <tbody id="newRegBody"></tbody></table>
+          </div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-hdr"><h3>🏆 Top Earners</h3></div>
+          <div class="bar-chart" id="topChart"></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="tbl-card">
+          <div class="tbl-hdr"><h3>💸 Recent Withdrawals</h3><span id="recentWDLabel" style="font-size:11px;color:var(--red);font-weight:700"></span></div>
+          <div class="tbl-wrap" style="max-height:260px">
+            <table><thead><tr><th>User</th><th>Method</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody id="recentWDBody"></tbody></table>
+          </div>
+        </div>
+        <div class="sum-box">
+          <h4>📊 Period Summary</h4>
+          <div class="sum-row"><span class="sum-key">New Users</span><span class="sum-val" id="sumNew">—</span></div>
+          <div class="sum-row"><span class="sum-key">Total Ads Watched</span><span class="sum-val" id="sumAds">—</span></div>
+          <div class="sum-row"><span class="sum-key">Total Referrals</span><span class="sum-val" id="sumRefs">—</span></div>
+          <div class="sum-row"><span class="sum-key">Total Withdrawn</span><span class="sum-val" id="sumWD">—</span></div>
+          <div class="sum-row"><span class="sum-key">Avg Balance</span><span class="sum-val" id="sumAvg">—</span></div>
+          <div class="sum-row"><span class="sum-key">Total Swap Coins</span><span class="sum-val" id="sumSC">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ ALL USERS ══════ -->
+    <div class="view" id="view-users">
+      <div class="tf-row"><span class="tf-label">Period:</span>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
+        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
+        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
+        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
+        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
+        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
+        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><h3>👥 All Users</h3>
+          <div class="tbl-right">
+            <input class="tbl-search" id="userSearch" placeholder="Search…" oninput="filterUsers(this.value)">
+            <button class="export-btn" onclick="exportCSV('users')">⬇ CSV</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>User ID</th><th>Username</th><th>Balance</th><th>SC</th><th>Ads</th><th>Refs</th><th>Joined</th><th>Ref By</th><th>Actions</th></tr></thead>
+          <tbody id="usersBody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="usersPagInfo">0</span><div class="pg-btns" id="usersPag"></div></div>
+      </div>
+    </div>
+
+    <!-- ══════ NEW USERS ══════ -->
+    <div class="view" id="view-newusers">
+      <div class="tf-row"><span class="tf-label">Period:</span>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
+        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
+        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
+        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
+        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
+        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
+        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><h3>🆕 New Registrations</h3><button class="export-btn" onclick="exportCSV('newusers')">⬇ CSV</button></div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>User ID</th><th>Username</th><th>Balance</th><th>Joined</th><th>Ref By</th></tr></thead>
+          <tbody id="newUsersBody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="newUsersPagInfo">0</span><div class="pg-btns" id="newUsersPag"></div></div>
+      </div>
+    </div>
+
+    <!-- ══════ REFERRALS ══════ -->
+    <div class="view" id="view-referrals">
+      <div class="tbl-card" style="padding:16px;margin-bottom:12px">
+        <h3 style="font-size:13px;font-weight:800;margin-bottom:12px">🌳 Trace Referral Chain</h3>
+        <div style="display:flex;gap:8px">
+          <input class="tbl-search" id="refSearchInp" placeholder="User ID or Username…" style="flex:1;width:auto">
+          <button class="export-btn" style="font-size:12px;padding:7px 16px" onclick="traceRef()">Trace</button>
+        </div>
+        <div id="refTreeResult" style="margin-top:12px"></div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><h3>📋 All Referral Pairs</h3>
+          <div class="tbl-right"><input class="tbl-search" placeholder="Search…" oninput="filterRefs(this.value)"><button class="export-btn" onclick="exportCSV('refs')">⬇ CSV</button></div>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Referrer ID</th><th>Referrer Name</th><th>Referred ID</th><th>Referred Name</th><th>Joined</th><th>Bonus</th></tr></thead>
+          <tbody id="refPairsBody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="refPagInfo">0</span><div class="pg-btns" id="refPag"></div></div>
+      </div>
+    </div>
+
+    <!-- ══════ WITHDRAWALS ══════ -->
+    <div class="view" id="view-withdrawals">
+      <div class="tf-row"><span class="tf-label">Period:</span>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
+        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
+        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
+        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
+        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
+        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
+        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+      </div>
+      <div class="stat-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card"><div class="stat-label">Total Withdrawn</div><div class="stat-val" id="wd-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val" id="wd-pend" style="color:var(--orange)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Paid</div><div class="stat-val" id="wd-paid" style="color:var(--green)">—</div></div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><h3>💸 Withdrawal Requests</h3>
+          <div class="tbl-right">
+            <select id="wdFilter" onchange="filterWD()" style="background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:5px 9px;color:var(--text);font-size:11px;outline:none">
+              <option value="">All</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="reject">Rejected</option>
+            </select>
+            <button class="export-btn" onclick="exportCSV('withdrawals')">⬇ CSV</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Date</th><th>User ID</th><th>Method</th><th>Account</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="wdBody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="wdPagInfo">0</span><div class="pg-btns" id="wdPag"></div></div>
+      </div>
+    </div>
+
+    <!-- ══════ SWAP COINS ══════ -->
+    <div class="view" id="view-swapcoin">
+      <div class="stat-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card"><div class="stat-label">Total SC Issued</div><div class="stat-val" id="sc-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">ETB Value</div><div class="stat-val" id="sc-etb">—</div></div>
+        <div class="stat-card"><div class="stat-label">Top SC Holder</div><div class="stat-val" id="sc-top" style="font-size:15px">—</div></div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><h3>🪙 SC Holders</h3><button class="export-btn" onclick="exportCSV('sc')">⬇ CSV</button></div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>User ID</th><th>Username</th><th>Swap Coins</th><th>ETB Equiv</th><th>Balance</th><th>Action</th></tr></thead>
+          <tbody id="scBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ ANALYTICS ══════ -->
+    <div class="view" id="view-analytics">
+      <div class="tf-row"><span class="tf-label">Period:</span>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
+        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
+        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
+        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
+        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
+        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
+        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Total Ads</div><div class="stat-val" id="an-ads">—</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Ads/User</div><div class="stat-val" id="an-avg">—</div></div>
+        <div class="stat-card"><div class="stat-label">Balance ≥2500</div><div class="stat-val" id="an-hi">—</div></div>
+        <div class="stat-card"><div class="stat-label">Balance = 50</div><div class="stat-val" id="an-lo">—</div></div>
+      </div>
+      <div class="two-col">
+        <div class="tbl-card"><div class="tbl-hdr"><h3>📊 Top 20 by Balance</h3></div><div class="bar-chart" id="an-chart"></div></div>
+        <div class="tbl-card">
+          <div class="tbl-hdr"><h3>🔗 Top Referrers</h3></div>
+          <div class="tbl-wrap" style="max-height:340px">
+            <table><thead><tr><th>Username</th><th>Refs</th><th>Earned</th></tr></thead>
+            <tbody id="an-refs"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ CONFIG ══════ -->
+    <div class="view" id="view-config">
+      <div class="cfg-card">
+        <h3>⚙️ Script Settings</h3>
+        <div class="cfg-row"><div><div class="cfg-key">Apps Script URL</div><div class="cfg-desc">Main backend endpoint</div></div><input class="cfg-inp" id="cfg-url" style="width:280px;font-size:10px"></div>
+        <div class="cfg-row"><div><div class="cfg-key">Auto Refresh (seconds)</div><div class="cfg-desc">How often to sync</div></div><input class="cfg-inp" id="cfg-int" type="number" value="30"></div>
+        <div class="cfg-row"><div><div class="cfg-key">Rows Per Page</div><div class="cfg-desc">Table pagination</div></div><input class="cfg-inp" id="cfg-ps" type="number" value="50"></div>
+        <div class="cfg-row">
+          <div><div class="cfg-key">Reset Cached Settings</div><div class="cfg-desc">If the URL above looks wrong/old even after editing, your browser saved a stale copy — click to wipe it and reload with the file's built-in default URL</div></div>
+          <button class="export-btn" onclick="clearCachedConfig()">🗑️ Clear &amp; Reload</button>
+        </div>
+      </div>
+      <div class="cfg-card">
+        <h3>💰 Economy</h3>
+        <div class="cfg-row"><div><div class="cfg-key">SC → ETB Rate</div><div class="cfg-desc">1 SC = ? ETB</div></div><input class="cfg-inp" id="cfg-scr" type="number" step="0.01" value="0.5"></div>
+        <div class="cfg-row"><div><div class="cfg-key">Min Withdrawal (ETB)</div></div><input class="cfg-inp" id="cfg-mwd" type="number" value="2500"></div>
+        <div class="cfg-row"><div><div class="cfg-key">Referral Bonus (ETB)</div></div><input class="cfg-inp" id="cfg-rb" type="number" value="50"></div>
+        <div class="cfg-row"><div><div class="cfg-key">Ad Reward (ETB)</div></div><input class="cfg-inp" id="cfg-ar" type="number" value="50"></div>
+      </div>
+      <button class="export-btn" style="font-size:12px;padding:11px 20px" onclick="saveConfig()">💾 Save Configuration</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ═══════════ CONFIG ═══════════ */
+var CFG={
+url:   localStorage.getItem('adm_url')  || 'https://script.google.com/macros/s/AKfycbxDii62Bjz7KNxIFY9deeDDxnjNx1ifHu93GRxkhmpC9srZ_ZFSAtQgttQYh8o1pXmIgQ/exec',
+  int:   +localStorage.getItem('adm_int') || 30,
+  ps:    +localStorage.getItem('adm_ps')  || 50,
+  scr:   +localStorage.getItem('adm_scr') || 0.5,
+  mwd:   +localStorage.getItem('adm_mwd') || 2500,
+  rb:    +localStorage.getItem('adm_rb')  || 50,
+  ar:    +localStorage.getItem('adm_ar')  || 50,
+};
+
+/* ═══════════ STATE ═══════════ */
+var D={ users:[], withdrawals:[] };
+var hours=1, curView='overview', autoT;
+var uPage=1,wPage=1,rPage=1,nuPage=1;
+var fUsers=[],fWD=[],fRefs=[],fNewU=[];
+
+/* ═══════════ TOAST ═══════════ */
+function toast(msg,type){
+  var el=document.createElement('div');
+  el.className='toast-item '+(type||'info');
+  el.textContent=msg;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(function(){el.remove();},3400);
+}
+
+/* ═══════════ NAV ═══════════ */
+var PAGE_TITLES={overview:'Dashboard Overview',users:'All Users',newusers:'New Registrations',
+  referrals:'Referral Tree',withdrawals:'Withdrawals',swapcoin:'Swap Coins',analytics:'Analytics',config:'Configuration'};
+function nav(id,btn){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.querySelectorAll('.sb-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('view-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  curView=id;
+  document.getElementById('pageTitle').textContent=PAGE_TITLES[id]||id;
+  renderView();
+}
+
+/* ═══════════ TIME FILTER ═══════════ */
+function setTF(h,btn){
+  hours=h;
+  document.querySelectorAll('.tf-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  renderView();
+}
+function filterByTime(rows,dateIdx){
+  if(hours===0)return rows;
+  var cut=new Date(Date.now()-hours*3600000);
+  return rows.filter(function(r){var d=new Date(r[dateIdx]);return !isNaN(d)&&d>=cut;});
+}
+
+/* ═══════════ LOAD DATA ═══════════ */
+function showLoad(msg){document.getElementById('loadingTxt').textContent=msg||'Loading…';document.getElementById('loading').classList.add('show');}
+function hideLoad(){document.getElementById('loading').classList.remove('show');}
+async function loadAll(){
+  showLoad('Loading data from Google Sheets…');
+  try{
+    var r1=await fetch(CFG.url+'?action=getAll');
+    if(!r1.ok){
+      throw new Error('HTTP '+r1.status+' from Apps Script — check the deployment is live and access is set to "Anyone"');
+    }
+    var j1=await r1.json();
+    if(j1.result==='error'){
+      throw new Error('Server error: '+(j1.message||'unknown')+' — check your "Users" sheet tab name and columns');
+    }
+    if(j1.users)D.users=j1.users;
+
+    var r2=await fetch(CFG.url+'?action=getWithdrawals');
+    var j2=await r2.json();
+    if(j2.result==='error'){
+      console.warn('Withdrawals fetch returned an error (continuing with Users data):', j2.message);
+    }
+    if(j2.withdrawals)D.withdrawals=j2.withdrawals;
+
+    document.getElementById('lastSync').textContent='Synced: '+new Date().toLocaleTimeString();
+    updateBadges();
+    renderView();
+
+    if(D.users.length===0){
+      toast('⚠️ Connected, but 0 users found — check your "Users" sheet has data below the header row','error');
+    } else {
+      toast('✅ '+D.users.length+' users loaded','success');
+    }
+  }catch(err){
+    console.error('[Swap Money Admin] loadAll failed:', err);
+    console.error('[Swap Money Admin] Current Script URL:', CFG.url);
+    toast('❌ '+err.message+' — showing demo data instead. Open browser console (F12) for details.','error');
+    loadDemo();
+  }
+  hideLoad();
+}
+function loadDemo(){
+  var names=['Adoniyas','Ezedin','Lidia','Yonas','Selam','Kaleb','Makeda','Sami','Hanan','Dawit'];
+  D.users=Array.from({length:100},function(_,i){return{
+    userId:String(1000000+i),username:names[i%10]+(i+1),
+    balance:Math.floor(Math.random()*8000)+50,totalAds:Math.floor(Math.random()*120),
+    joinedDate:new Date(Date.now()-Math.random()*30*86400000).toISOString(),
+    referredBy:i>0?String(1000000+Math.floor(Math.random()*i)):'None',
+    totalReferrals:Math.floor(Math.random()*18),swapCoins:Math.floor(Math.random()*300)};});
+  D.withdrawals=Array.from({length:44},function(_,i){return{
+    date:new Date(Date.now()-Math.random()*7*86400000).toISOString(),
+    userId:String(1000000+Math.floor(Math.random()*100)),
+    method:['Telebirr','CBE Bank','Awash'][i%3],
+    account:'09'+Math.floor(10000000+Math.random()*89999999),
+    amount:(Math.floor(Math.random()*30)+25)*100,
+    status:['በጥበቃ ላይ','ተከፍሏል','ውድቅ'][Math.floor(Math.random()*3)]};});
+  updateBadges();renderView();
+}
+function updateBadges(){
+  var pend=D.withdrawals.filter(function(w){return w.status&&w.status.indexOf('ጥበቃ')>-1;}).length;
+  document.getElementById('pendBadge').textContent=pend;
+  var cut24=new Date(Date.now()-86400000);
+  var newu=D.users.filter(function(u){return new Date(u.joinedDate)>=cut24;}).length;
+  document.getElementById('newBadge').textContent=newu;
+}
+
+/* ═══════════ RENDER DISPATCH ═══════════ */
+function renderView(){
+  if(curView==='overview')    renderOverview();
+  else if(curView==='users')  renderUsers();
+  else if(curView==='newusers')renderNewUsers();
+  else if(curView==='referrals')renderReferrals();
+  else if(curView==='withdrawals')renderWithdrawals();
+  else if(curView==='swapcoin')renderSC();
+  else if(curView==='analytics')renderAnalytics();
+}
+
+/* ═══════════ OVERVIEW ═══════════ */
+function renderOverview(){
+  var u=D.users, w=D.withdrawals;
+  var fu=filterByTime(u.map(function(x){return[x.userId,x.username,x.balance,x.totalAds,x.joinedDate,x.referredBy,x.totalReferrals,x.swapCoins];}),4);
+  var fw=filterByTime(w.map(function(x){return[x.date,x.userId,x.method,x.account,x.amount,x.status];}),0);
+  var totBal=u.reduce(function(s,x){return s+Number(x.balance||0);},0);
+  var totSC=u.reduce(function(s,x){return s+Number(x.swapCoins||0);},0);
+  var pend=w.filter(function(x){return x.status&&x.status.indexOf('ጥበቃ')>-1;});
+  var pendAmt=pend.reduce(function(s,x){return s+Number(x.amount||0);},0);
+  var totAds=u.reduce(function(s,x){return s+Number(x.totalAds||0);},0);
+  var totRefs=u.reduce(function(s,x){return s+Number(x.totalReferrals||0);},0);
+  var totWD=w.reduce(function(s,x){return s+Number(x.amount||0);},0);
+
+  st('ov-users',u.length.toLocaleString());
+  st('ov-newu','↑ '+fu.length+' in period');
+  st('ov-bal',(totBal/1000).toFixed(1)+'K ETB');
+  st('ov-avg','Avg: '+(u.length?Math.round(totBal/u.length):0)+' ETB');
+  st('ov-pendWD',pend.length);
+  st('ov-pendAmt',pendAmt.toLocaleString()+' ETB pending');
+  st('ov-sc',totSC.toLocaleString()+' SC');
+  st('ov-scEtb',(totSC*CFG.scr).toLocaleString());
+  st('sumNew',fu.length);st('sumAds',totAds.toLocaleString());
+  st('sumRefs',totRefs.toLocaleString());st('sumWD',totWD.toLocaleString()+' ETB');
+  st('sumAvg',(u.length?Math.round(totBal/u.length):0)+' ETB');st('sumSC',totSC.toLocaleString()+' SC');
+
+  var newReg=[...fu].sort(function(a,b){return new Date(b[4])-new Date(a[4]);}).slice(0,8);
+  st('newRegLabel',fu.length+' users');
+  document.getElementById('newRegBody').innerHTML=newReg.map(function(r){return'<tr><td class="td-id">'+r[0]+'</td><td class="td-name">'+r[1]+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-id">'+(r[5]||'—')+'</td></tr>';}).join('');
+
+  var top8=[...u].sort(function(a,b){return b.balance-a.balance;}).slice(0,8);
+  var maxB=top8[0]?top8[0].balance:1;
+  document.getElementById('topChart').innerHTML=top8.map(function(x){return'<div class="bc-row"><div class="bc-label">'+(x.username||x.userId)+'</div><div class="bc-bg"><div class="bc-fill" style="width:'+((x.balance/maxB*100).toFixed(1))+'%"></div></div><div class="bc-val">'+Number(x.balance).toLocaleString()+'</div></div>';}).join('');
+
+  var rwds=[...fw].sort(function(a,b){return new Date(b[0])-new Date(a[0]);}).slice(0,6);
+  st('recentWDLabel',fw.length+' total');
+  document.getElementById('recentWDBody').innerHTML=rwds.map(function(r){return'<tr><td class="td-id">'+r[1]+'</td><td>'+r[2]+'</td><td class="td-bal">'+Number(r[4]).toLocaleString()+'</td><td><span class="td-status '+sc(r[5])+'">'+r[5]+'</span></td></tr>';}).join('');
+}
+
+/* ═══════════ USERS TABLE ═══════════ */
+function renderUsers(){
+  var tf=filterByTime(D.users.map(function(u){return[u.userId,u.username,u.balance,u.totalAds,u.joinedDate,u.referredBy,u.totalReferrals,u.swapCoins];}),4);
+  var q=(document.getElementById('userSearch')||{}).value||'';
+  fUsers=tf.filter(function(r){return !q||String(r[0]).includes(q)||String(r[1]).toLowerCase().includes(q.toLowerCase());});
+  paginate('usersBody','usersPagInfo','usersPag',fUsers,uPage,function(p){uPage=p;renderUsers();},function(r){
+    return'<tr><td class="td-id">'+r[0]+'</td><td class="td-name">'+(r[1]||'—')+'</td><td class="td-bal">'+Number(r[2]).toLocaleString()+'</td><td class="td-sc">'+Number(r[7]).toLocaleString()+'</td><td class="td-ads">'+(r[3]||0)+'</td><td class="td-refs">'+(r[6]||0)+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-id">'+(r[5]||'—')+'</td><td style="display:flex;gap:4px"><button class="act-btn act-edit" onclick=\'openUser('+JSON.stringify(r)+')\'>View</button><button class="act-btn act-approve" onclick=\'openBal("'+r[0]+'",'+r[2]+')\'>Edit</button></td></tr>';
+  });
+}
+function filterUsers(q){uPage=1;renderUsers();}
+
+/* ═══════════ NEW USERS ═══════════ */
+function renderNewUsers(){
+  fNewU=[...filterByTime(D.users.map(function(u){return[u.userId,u.username,u.balance,u.totalAds,u.joinedDate,u.referredBy];}),4)].sort(function(a,b){return new Date(b[4])-new Date(a[4]);});
+  document.getElementById('newBadge').textContent=fNewU.length;
+  paginate('newUsersBody','newUsersPagInfo','newUsersPag',fNewU,nuPage,function(p){nuPage=p;renderNewUsers();},function(r){
+    return'<tr><td class="td-id">'+r[0]+'</td><td class="td-name">'+(r[1]||'—')+'</td><td class="td-bal">'+Number(r[2]).toLocaleString()+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-id">'+(r[5]||'—')+'</td></tr>';
+  });
+}
+
+/* ═══════════ REFERRALS ═══════════ */
+function renderReferrals(){
+  var pairs=D.users.filter(function(u){return u.referredBy&&u.referredBy!=='None'&&u.referredBy!=='undefined'&&u.referredBy!=='';});
+  fRefs=pairs.map(function(u){var ref=D.users.find(function(r){return r.userId===u.referredBy;})||{};return[u.referredBy,ref.username||'Unknown',u.userId,u.username||'—',u.joinedDate,CFG.rb];});
+  paginate('refPairsBody','refPagInfo','refPag',fRefs,rPage,function(p){rPage=p;renderReferrals();},function(r){
+    return'<tr><td class="td-id">'+r[0]+'</td><td class="td-name">'+r[1]+'</td><td class="td-id">'+r[2]+'</td><td class="td-name">'+r[3]+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-bal">+'+r[5]+' ETB</td></tr>';
+  });
+}
+function filterRefs(q){
+  var all=D.users.filter(function(u){return u.referredBy&&u.referredBy!=='None';});
+  fRefs=all.filter(function(u){return String(u.userId).includes(q)||String(u.username||'').toLowerCase().includes(q.toLowerCase());}).map(function(u){var r=D.users.find(function(x){return x.userId===u.referredBy;})||{};return[u.referredBy,r.username||'?',u.userId,u.username||'—',u.joinedDate,CFG.rb];});
+  paginate('refPairsBody','refPagInfo','refPag',fRefs,1,function(){},function(r){return'<tr><td class="td-id">'+r[0]+'</td><td class="td-name">'+r[1]+'</td><td class="td-id">'+r[2]+'</td><td class="td-name">'+r[3]+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-bal">+'+r[5]+' ETB</td></tr>';});
+}
+function traceRef(){
+  var q=document.getElementById('refSearchInp').value.trim();
+  if(!q){toast('User ID ያስገቡ','error');return;}
+  var user=D.users.find(function(u){return u.userId===q||u.username===q;});
+  if(!user){toast('User ያልተገኘ','error');return;}
+  var html='';
+  var parent=user.referredBy&&user.referredBy!=='None'?D.users.find(function(u){return u.userId===user.referredBy;}):null;
+  if(parent){html+='<div class="ref-node"><div class="ref-av" style="background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000">'+(parent.username||'?')[0].toUpperCase()+'</div><div class="ref-info"><h5>'+(parent.username||parent.userId)+' <span class="ref-chip root">Referrer</span></h5><p>ID: '+parent.userId+'</p></div></div><div style="padding:4px 0 4px 20px;font-size:10px;color:var(--muted)">↓ ↓</div>';}
+  html+='<div class="ref-node"><div class="ref-av">'+(user.username||'?')[0].toUpperCase()+'</div><div class="ref-info"><h5>'+(user.username||user.userId)+' <span class="ref-chip root">Searched</span></h5><p>Balance: '+Number(user.balance).toLocaleString()+' ETB · Refs: '+(user.totalReferrals||0)+'</p></div></div>';
+  var children=D.users.filter(function(u){return u.referredBy===user.userId;});
+  if(children.length){html+='<div style="padding:8px 0 4px;font-size:10px;color:var(--muted);font-weight:700">↓ '+children.length+' people invited:</div>';children.slice(0,15).forEach(function(c){html+='<div class="ref-node child"><div class="ref-av b">'+(c.username||'?')[0].toUpperCase()+'</div><div class="ref-info"><h5>'+(c.username||c.userId)+' <span class="ref-chip ref">Referred</span></h5><p>Joined: '+fd(c.joinedDate)+'</p></div></div>';var gk=D.users.filter(function(u){return u.referredBy===c.userId;});gk.slice(0,3).forEach(function(g){html+='<div class="ref-node grandchild"><div class="ref-av p">'+(g.username||'?')[0].toUpperCase()+'</div><div class="ref-info"><h5>'+(g.username||g.userId)+' <span class="ref-chip sub">L2</span></h5><p>'+fd(g.joinedDate)+'</p></div></div>';});});if(children.length>15)html+='<div style="padding:6px 12px;font-size:10px;color:var(--muted)">…and '+(children.length-15)+' more</div>';}
+  else{html+='<div style="padding:8px 12px;font-size:11px;color:var(--muted)">ምንም ሪፈራል የለም</div>';}
+  document.getElementById('refTreeResult').innerHTML=html;
+}
+
+/* ═══════════ WITHDRAWALS ═══════════ */
+function renderWithdrawals(){
+  var tf=filterByTime(D.withdrawals.map(function(w){return[w.date,w.userId,w.method,w.account,w.amount,w.status];}),0);
+  var sq=(document.getElementById('wdFilter')||{}).value||'';
+  fWD=tf.filter(function(r){return !sq||sc(r[5])===sq;});
+  var tot=fWD.reduce(function(s,r){return s+Number(r[4]||0);},0);
+  var pend=fWD.filter(function(r){return sc(r[5])==='pending';});
+  var paid=fWD.filter(function(r){return sc(r[5])==='paid';});
+  st('wd-total',tot.toLocaleString()+' ETB');
+  st('wd-pend',pend.length);st('wd-paid',paid.length);
+  document.getElementById('pendBadge').textContent=pend.length;
+  paginate('wdBody','wdPagInfo','wdPag',fWD,wPage,function(p){wPage=p;renderWithdrawals();},function(r,i){
+    var isPend=sc(r[5])==='pending';
+    return'<tr><td class="td-date">'+fd(r[0])+'</td><td class="td-id">'+r[1]+'</td><td>'+r[2]+'</td><td class="td-id">'+r[3]+'</td><td class="td-bal">'+Number(r[4]).toLocaleString()+'</td><td><span class="td-status '+sc(r[5])+'">'+r[5]+'</span></td><td style="display:flex;gap:4px">'+(isPend?'<button class="act-btn act-approve" onclick="markWD(\''+r[1]+'\','+r[4]+',\'paid\')">✓ Pay</button><button class="act-btn act-reject" onclick="markWD(\''+r[1]+'\','+r[4]+',\'reject\')">✗</button>':'<span style="color:var(--dim);font-size:10px">Done</span>')+'</td></tr>';
+  });
+}
+function filterWD(){wPage=1;renderWithdrawals();}
+async function markWD(userId,amount,action){
+  try{
+    await fetch(CFG.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'updateWDStatus',userId:userId,amount:amount,newStatus:action})});
+    D.withdrawals.forEach(function(w){if(w.userId===userId&&w.amount==amount&&w.status.indexOf('ጥበቃ')>-1)w.status=action==='paid'?'ተከፍሏል':'ውድቅ';});
+    toast(action==='paid'?'✅ Marked as Paid':'❌ Rejected','success');
+    renderWithdrawals();
+  }catch(e){toast('Update failed','error');}
+}
+
+/* ═══════════ SWAP COINS ═══════════ */
+function renderSC(){
+  var sorted=[...D.users].sort(function(a,b){return b.swapCoins-a.swapCoins;}).filter(function(u){return u.swapCoins>0;});
+  var tot=D.users.reduce(function(s,u){return s+Number(u.swapCoins||0);},0);
+  st('sc-total',tot.toLocaleString()+' SC');
+  st('sc-etb',(tot*CFG.scr).toLocaleString()+' ETB');
+  st('sc-top',sorted[0]?sorted[0].username:'—');
+  document.getElementById('scBody').innerHTML=sorted.map(function(u){return'<tr><td class="td-id">'+u.userId+'</td><td class="td-name">'+(u.username||'—')+'</td><td class="td-sc">'+Number(u.swapCoins).toLocaleString()+'</td><td style="color:var(--green);font-weight:700">'+(u.swapCoins*CFG.scr).toFixed(2)+'</td><td class="td-bal">'+Number(u.balance).toLocaleString()+'</td><td><button class="act-btn act-approve" onclick=\'openBal("'+u.userId+'",'+u.balance+')\'>Edit</button></td></tr>';}).join('');
+}
+
+/* ═══════════ ANALYTICS ═══════════ */
+function renderAnalytics(){
+  var u=D.users;
+  var totAds=u.reduce(function(s,x){return s+Number(x.totalAds||0);},0);
+  var hibal=u.filter(function(x){return x.balance>=2500;}).length;
+  var lobal=u.filter(function(x){return x.balance<=50;}).length;
+  st('an-ads',totAds.toLocaleString());
+  st('an-avg',u.length?(totAds/u.length).toFixed(1):'0');
+  st('an-hi',hibal);st('an-lo',lobal);
+  var top20=[...u].sort(function(a,b){return b.balance-a.balance;}).slice(0,20);
+  var mx=top20[0]?top20[0].balance:1;
+  document.getElementById('an-chart').innerHTML=top20.map(function(x){return'<div class="bc-row"><div class="bc-label">'+(x.username||x.userId)+'</div><div class="bc-bg"><div class="bc-fill" style="width:'+((x.balance/mx*100).toFixed(1))+'%"></div></div><div class="bc-val">'+Number(x.balance).toLocaleString()+'</div></div>';}).join('');
+  var topR=[...u].sort(function(a,b){return b.totalReferrals-a.totalReferrals;}).slice(0,12).filter(function(x){return x.totalReferrals>0;});
+  document.getElementById('an-refs').innerHTML=topR.map(function(u){return'<tr><td class="td-name">'+(u.username||u.userId)+'</td><td class="td-refs">'+u.totalReferrals+'</td><td class="td-bal">'+(u.totalReferrals*CFG.rb).toLocaleString()+' ETB</td></tr>';}).join('');
+}
+
+/* ═══════════ MODALS ═══════════ */
+function openUser(row){
+  var refs=D.users.filter(function(u){return u.referredBy===row[0];});
+  document.getElementById('userModalBody').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><div class="sum-box"><h4>Profile</h4><div class="sum-row"><span class="sum-key">User ID</span><span class="sum-val" style="font-size:10px">'+row[0]+'</span></div><div class="sum-row"><span class="sum-key">Username</span><span class="sum-val">'+(row[1]||'—')+'</span></div><div class="sum-row"><span class="sum-key">Balance</span><span class="sum-val" style="color:var(--gold)">'+Number(row[2]).toLocaleString()+' ETB</span></div><div class="sum-row"><span class="sum-key">Swap Coins</span><span class="sum-val" style="color:var(--purple)">'+Number(row[7]).toLocaleString()+'</span></div><div class="sum-row"><span class="sum-key">Ads</span><span class="sum-val">'+(row[3]||0)+'</span></div></div><div class="sum-box"><h4>Activity</h4><div class="sum-row"><span class="sum-key">Joined</span><span class="sum-val" style="font-size:10px">'+fd(row[4])+'</span></div><div class="sum-row"><span class="sum-key">Referred By</span><span class="sum-val" style="font-size:10px">'+(row[5]||'None')+'</span></div><div class="sum-row"><span class="sum-key">Total Refs</span><span class="sum-val">'+(row[6]||0)+'</span></div><div class="sum-row"><span class="sum-key">Ref Bonus</span><span class="sum-val" style="color:var(--green)">'+((row[6]||0)*CFG.rb).toLocaleString()+' ETB</span></div></div></div><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:7px">Referred Users ('+refs.length+')</div><div style="max-height:120px;overflow-y:auto">'+refs.slice(0,8).map(function(r){return'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border2);font-size:11px"><span>'+(r.username||r.userId)+'</span><span style="color:var(--muted)">'+fd(r.joinedDate)+'</span></div>';}).join('')+'</div>';
+  document.getElementById('userModal').classList.add('show');
+}
+function openBal(id,cur){
+  document.getElementById('adjId').value=id;
+  document.getElementById('adjCur').value=Number(cur).toLocaleString()+' ETB';
+  document.getElementById('adjNew').value='';
+  document.getElementById('adjNote').value='';
+  document.getElementById('balModal').classList.add('show');
+}
+async function submitBalAdj(){
+  var id=document.getElementById('adjId').value;
+  var nb=parseFloat(document.getElementById('adjNew').value);
+  if(isNaN(nb)){toast('Valid amount ያስገቡ','error');return;}
+  try{
+    await fetch(CFG.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'adminSetBalance',userId:id,balance:nb,note:document.getElementById('adjNote').value})});
+    var u=D.users.find(function(x){return x.userId===id;});
+    if(u)u.balance=nb;
+    closeModal('balModal');toast('✅ Balance updated','success');renderView();
+  }catch(e){toast('Failed','error');}
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+/* ═══════════ PAGINATION ═══════════ */
+function paginate(bodyId,infoId,btnId,data,page,onPage,rowFn){
+  var ps=CFG.ps,tot=data.length,pages=Math.ceil(tot/ps);
+  var start=(page-1)*ps,slice=data.slice(start,start+ps);
+  document.getElementById(bodyId).innerHTML=slice.map(function(r,i){return rowFn(r,start+i);}).join('');
+  document.getElementById(infoId).textContent='Showing '+(start+1)+'–'+Math.min(start+ps,tot)+' of '+tot;
+  var s=Math.max(1,page-3),e=Math.min(pages,s+6);
+  var html='';
+  if(s>1)html+='<button class="pg-btn" onclick="('+onPage+')(1)">«</button>';
+  for(var p=s;p<=e;p++)html+='<button class="pg-btn '+(p===page?'active':'')+'" onclick="('+onPage+')('+p+')">'+p+'</button>';
+  if(e<pages)html+='<button class="pg-btn" onclick="('+onPage+')('+pages+')">»</button>';
+  document.getElementById(btnId).innerHTML=html;
+}
+
+/* ═══════════ CSV EXPORT ═══════════ */
+function exportCSV(type){
+  var headers,rows;
+  if(type==='users'){headers=['User_ID','Username','Balance','Total_Ads','Joined_Date','Referred_By','Total_Referrals','Swap_Coins'];rows=fUsers;}
+  else if(type==='withdrawals'){headers=['Date','User_ID','Method','Account','Amount','Status'];rows=fWD;}
+  else if(type==='refs'){headers=['Referrer_ID','Referrer_Name','Referred_ID','Referred_Name','Joined_Date','Bonus'];rows=fRefs;}
+  else if(type==='newusers'){headers=['User_ID','Username','Balance','Total_Ads','Joined_Date','Referred_By'];rows=fNewU;}
+  else if(type==='sc'){headers=['User_ID','Username','Swap_Coins','ETB_Equiv','Balance'];rows=[...D.users].sort(function(a,b){return b.swapCoins-a.swapCoins;}).filter(function(u){return u.swapCoins>0;}).map(function(u){return[u.userId,u.username,u.swapCoins,(u.swapCoins*CFG.scr).toFixed(2),u.balance];});}
+  var csv=[headers.join(',')].concat(rows.map(function(r){return r.map(function(v){return'"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');})).join('\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='swapmoney_'+type+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('📥 CSV exported','success');
+}
+
+/* ═══════════ GLOBAL SEARCH ═══════════ */
+function globalSearch(q){
+  if(!q)return;
+  nav('users',document.querySelector('.sb-btn:nth-child(4)'));
+  var el=document.getElementById('userSearch');
+  if(el)el.value=q;
+  filterUsers(q);
+}
+
+/* ═══════════ CONFIG ═══════════ */
+function saveConfig(){
+  CFG.url=document.getElementById('cfg-url').value;
+  CFG.int=+document.getElementById('cfg-int').value||30;
+  CFG.ps=+document.getElementById('cfg-ps').value||50;
+  CFG.scr=+document.getElementById('cfg-scr').value||0.5;
+  CFG.mwd=+document.getElementById('cfg-mwd').value||2500;
+  CFG.rb=+document.getElementById('cfg-rb').value||50;
+  CFG.ar=+document.getElementById('cfg-ar').value||50;
+  Object.entries(CFG).forEach(function(e){localStorage.setItem('adm_'+e[0],e[1]);});
+  document.getElementById('syncIntervalLabel').textContent=CFG.int;
+  resetAuto();
+  toast('✅ Config saved','success');
+}
+function loadConfig(){
+  document.getElementById('cfg-url').value=CFG.url;
+  document.getElementById('cfg-int').value=CFG.int;
+  document.getElementById('cfg-ps').value=CFG.ps;
+  document.getElementById('cfg-scr').value=CFG.scr;
+  document.getElementById('cfg-mwd').value=CFG.mwd;
+  document.getElementById('cfg-rb').value=CFG.rb;
+  document.getElementById('cfg-ar').value=CFG.ar;
+  document.getElementById('syncIntervalLabel').textContent=CFG.int;
+}
+function clearCachedConfig(){
+  // Wipes every adm_* key this dashboard has ever saved to
+  // localStorage, so the next load falls back to the URL/values
+  // hard-coded in this HTML file — useful when the browser is
+  // still using an old Script URL saved from a previous session
+  // even after you've updated the file itself.
+  ['adm_url','adm_int','adm_ps','adm_scr','adm_mwd','adm_rb','adm_ar'].forEach(function(k){
+    localStorage.removeItem(k);
+  });
+  toast('🗑️ Cache cleared — reloading…','success');
+  setTimeout(function(){ location.reload(); }, 600);
+}
+function resetAuto(){clearInterval(autoT);autoT=setInterval(loadAll,CFG.int*1000);}
+
+/* ═══════════ HELPERS ═══════════ */
+function st(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function fd(d){
+  if(!d)return'—';
+  try{var dt=new Date(d);return isNaN(dt)?String(d).slice(0,16):dt.toLocaleDateString()+ ' '+dt.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});}
+  catch(e){return String(d).slice(0,16);}
+}
+function sc(s){
+  if(!s)return'pending';
+  if(s.indexOf('ጥበቃ')>-1||s.toLowerCase().indexOf('pend')>-1)return'pending';
+  if(s.indexOf('ተከፍሏ')>-1||s.toLowerCase().indexOf('paid')>-1)return'paid';
+  if(s.indexOf('ውድቅ')>-1||s.toLowerCase().indexOf('rej')>-1)return'reject';
+  return'pending';
+}
+
+/* ═══════════ INIT ═══════════ */
+loadConfig();
+loadAll();
+resetAuto();
+</script>
+</body>
+</html>
