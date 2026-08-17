@@ -633,14 +633,14 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
         <h3>📢 Telegram Broadcast Sender</h3>
         <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">ለሁሉም የ Swap Money ቴሌግራም ተጠቃሚዎች በአንድ ላይ መልእክት መላኪያ</p>
         
-        <div class="cfg-row">
+        <div class="cfg-row" style="display:none">
           <div><div class="cfg-key">Apps Script URL</div><div class="cfg-desc">Broadcast endpoint</div></div>
           <input class="cfg-inp" id="bc-url" style="width:280px;font-size:10px" placeholder="https://script.google.com/macros/s/.../exec">
         </div>
 
         <div class="cfg-row">
-          <div><div class="cfg-key">Admin Secret Key</div><div class="cfg-desc">Security verification</div></div>
-          <input class="cfg-inp" id="bc-key" type="password" style="width:220px;font-size:11px" placeholder="SWAP_ADMIN_SECURE_2026">
+          <div><div class="cfg-key">Telegram Bot Token</div><div class="cfg-desc">የቴሌግራም Bot API Token</div></div>
+          <input class="cfg-inp" id="bc-key" type="password" style="width:220px;font-size:11px" placeholder="1234567890:AAE_...">
         </div>
 
         <div class="cfg-row">
@@ -664,7 +664,8 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
         </div>
 
         <div id="bc-status" style="margin-top:14px;padding:12px;border-radius:10px;font-size:11px;font-weight:700;text-align:center;display:none;"></div>
-        <button class="export-btn" style="font-size:12px;padding:11px 20px;margin-top:14px;width:100%" onclick="submitBroadcast()">🚀 Send Broadcast to All Users</button>
+        <div id="bcStatusBox" style="display:none"></div>
+        <button class="export-btn" style="font-size:12px;padding:11px 20px;margin-top:14px;width:100%" onclick="submitBroadcastAdmin()">🚀 Send Broadcast to All Users</button>
       </div>
     </div>
 
@@ -1192,61 +1193,161 @@ function sc(s){
 }
 
 /* ═══════════ BROADCAST ═══════════ */
-function submitBroadcast(){
-  var url=document.getElementById('bc-url').value.trim();
-  var key=document.getElementById('bc-key').value.trim();
-  var text=document.getElementById('bc-text').value.trim();
-  var photo=document.getElementById('bc-photo').value.trim();
-  var btnText=document.getElementById('bc-btn-text').value.trim();
-  var btnUrl=document.getElementById('bc-btn-url').value.trim();
-  var statusEl=document.getElementById('bc-status');
-  var btn=document.querySelector('.view#view-broadcast .export-btn');
-  
-  if(!url){toast('እባክዎ Apps Script URL ያስገቡ','error');return;}
-  if(!key){toast('እባክዎ Admin Secret Key ያስገቡ','error');return;}
-  if(!text){toast('እባክዎ የማስታወቂያ ፅሁፍ ያስገቡ','error');return;}
-  
-  localStorage.setItem('bc_url',url);
-  localStorage.setItem('bc_key',key);
-  
-  if(!confirm('እርግጠኛ ነዎት ይህ መልእክት በቴሌግራም ለሁሉም ተጠቃሚዎች ይላክ?')) return;
-  
-  btn.disabled=true;
-  btn.textContent='⏳ Sending to All Users…';
-  statusEl.style.display='none';
-  
-  fetch(url,{
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({
-      action:'sendBroadcast',
-      adminKey:key,
-      text:text,
-      photoUrl:photo,
-      btnText:btnText,
-      btnUrl:btnUrl
-    })
-  }).then(function(res){return res.json();}).then(function(data){
-    if(data.result==='success'){
-      statusEl.className='status success';
-      statusEl.innerHTML='✅ Broadcast ተልኳል!<br><b>Sent:</b> '+data.sent+' ሰዎች | <b>Failed:</b> '+data.failed;
-      statusEl.style.display='block';
-      toast('✅ Broadcast sent successfully','success');
-    }else{
-      statusEl.className='status error';
-      statusEl.textContent='❌ '+(data.message||'መላክ አልተሳካም');
-      statusEl.style.display='block';
-      toast('❌ '+(data.message||'Broadcast failed'),'error');
+var broadcastState = { running: false, paused: false, stop: false };
+
+async function submitBroadcastAdmin() {
+  var text = document.getElementById('bc-text').value.trim();
+  var photo = document.getElementById('bc-photo').value.trim();
+  var btnText = document.getElementById('bc-btn-text').value.trim();
+  var btnUrl = document.getElementById('bc-btn-url').value.trim();
+
+  if (!text) { toast('የማስታወቂያ ፅሁፍ ያስገቡ', 'error'); return; }
+  if (!confirm('እርግጠኛ ነዎት ይህ መልእክት በቴሌግራም ለሁሉም ተጠቃሚዎች ይላክ?')) return;
+
+  // 1. Fetch user list using GET getAll
+  showLoad('Fetching users list from database…');
+  var users = [];
+  try {
+    var res = await fetch(CFG.url + '?action=getAll');
+    var data = await res.json();
+    if (data.users && data.users.length > 0) {
+      users = data.users;
+    } else {
+      toast('No users found in database', 'error');
+      hideLoad();
+      return;
     }
-  }).catch(function(e){
-    statusEl.className='status error';
-    statusEl.textContent='❌ Network Error: '+e.message;
-    statusEl.style.display='block';
-    toast('❌ Network Error: '+e.message,'error');
-  }).finally(function(){
-    btn.disabled=false;
-    btn.textContent='🚀 Send Broadcast to All Users';
-  });
+  } catch (err) {
+    toast('Failed to fetch user list: ' + err.message, 'error');
+    hideLoad();
+    return;
+  }
+  hideLoad();
+
+  // 2. Prepare Telegram Bot API Endpoint
+  var botToken = document.getElementById('bc-key').value.trim();
+  if (!botToken) { toast('እባክዎ Bot Token ያስገቡ (Admin Secret Key field)', 'error'); return; }
+  var tgEndpointPhoto = 'https://api.telegram.org/bot' + botToken + '/sendPhoto';
+  var tgEndpointText  = 'https://api.telegram.org/bot' + botToken + '/sendMessage';
+
+  var replyMarkup = null;
+  if (btnText && btnUrl && btnUrl.toLowerCase().indexOf('http') === 0) {
+    replyMarkup = JSON.stringify({ inline_keyboard: [[ { text: btnText, url: btnUrl } ]] });
+  }
+  if (photo && photo.toLowerCase().indexOf('http') !== 0) photo = '';
+
+  // 3. Setup UI Control Box
+  var statusBox = document.getElementById('bcStatusBox');
+  var container = document.getElementById('view-broadcast');
+  if (!statusBox) {
+    statusBox = document.createElement('div');
+    statusBox.id = 'bcStatusBox';
+    statusBox.className = 'sum-box';
+    statusBox.style.marginTop = '14px';
+    if (container) container.appendChild(statusBox);
+  }
+  statusBox.style.display = 'block';
+
+  broadcastState.running = true;
+  broadcastState.paused  = false;
+  broadcastState.stop    = false;
+
+  var sent = 0, failed = 0, total = users.length;
+
+  for (var i = 0; i < total; i++) {
+    if (broadcastState.stop) {
+      toast('⏹️ Broadcast stopped by admin', 'info');
+      break;
+    }
+
+    while (broadcastState.paused) {
+      statusBox.innerHTML =
+        '<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:6px">⏸️ Broadcast Paused</div>' +
+        '<div style="font-size:11px;color:var(--text);margin-bottom:8px">Sent: <b style="color:var(--green)">' + sent + '</b> | Failed/Blocked: <b style="color:var(--red)">' + failed + '</b> | Total: <b>' + total + '</b></div>' +
+        '<div style="margin-top:8px"><button class="act-btn act-approve" onclick="togglePauseBroadcast()">▶️ Resume</button> <button class="act-btn act-reject" onclick="stopBroadcast()">⏹️ Stop</button></div>';
+      await new Promise(function(r){ setTimeout(r, 1000); });
+      if (broadcastState.stop) break;
+    }
+    if (broadcastState.stop) break;
+
+    var uid = users[i].userId;
+    if (!uid || uid === 'None' || uid === 'undefined') continue;
+
+    var success = false;
+
+    // Try Photo send if photo provided
+    if (photo) {
+      try {
+        var bodyObj = { chat_id: uid, photo: photo, caption: text, parse_mode: 'HTML' };
+        if (replyMarkup) bodyObj.reply_markup = replyMarkup;
+        var resp = await fetch(tgEndpointPhoto, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyObj)
+        });
+        var resData = await resp.json();
+        if (resData && resData.ok) {
+          success = true;
+        } else if (resData && resData.error_code === 429) {
+          var waitSec = (resData.parameters && resData.parameters.retry_after) ? resData.parameters.retry_after : 3;
+          statusBox.innerHTML = '<div style="color:var(--orange)">⚠️ Telegram Rate Limit hit. Waiting ' + waitSec + 's…</div>';
+          await new Promise(function(r){ setTimeout(r, (waitSec + 1) * 1000); });
+          i--; continue;
+        }
+      } catch (e) {}
+    }
+
+    // Fallback: text message
+    if (!success) {
+      try {
+        var bodyObj2 = { chat_id: uid, text: text, parse_mode: 'HTML' };
+        if (replyMarkup) bodyObj2.reply_markup = replyMarkup;
+        var resp2 = await fetch(tgEndpointText, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyObj2)
+        });
+        var resData2 = await resp2.json();
+        if (resData2 && resData2.ok) {
+          success = true;
+        } else if (resData2 && resData2.error_code === 429) {
+          var waitSec2 = (resData2.parameters && resData2.parameters.retry_after) ? resData2.parameters.retry_after : 3;
+          statusBox.innerHTML = '<div style="color:var(--orange)">⚠️ Telegram Rate Limit hit. Waiting ' + waitSec2 + 's…</div>';
+          await new Promise(function(r){ setTimeout(r, (waitSec2 + 1) * 1000); });
+          i--; continue;
+        }
+      } catch (e) {}
+    }
+
+    if (success) { sent++; } else { failed++; }
+
+    // Live Progress UI
+    var pct = Math.round(((i + 1) / total) * 100);
+    statusBox.innerHTML =
+      '<div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:6px">🚀 Live Broadcast in Progress: ' + pct + '%</div>' +
+      '<div style="font-size:11px;color:var(--text);margin-bottom:8px">Sent: <b style="color:var(--green)">' + sent + '</b> | Failed/Blocked: <b style="color:var(--red)">' + failed + '</b> | Total: <b>' + total + '</b></div>' +
+      '<div style="width:100%;height:8px;background:var(--card2);border-radius:10px;overflow:hidden;margin-bottom:10px">' +
+        '<div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .2s"></div>' +
+      '</div>' +
+      '<div><button class="act-btn act-edit" onclick="togglePauseBroadcast()">⏸️ Pause</button> <button class="act-btn act-reject" onclick="stopBroadcast()">⏹️ Stop</button></div>';
+
+    // ~28 msgs/sec (Telegram rate limit safe)
+    await new Promise(function(r){ setTimeout(r, 35); });
+  }
+
+  broadcastState.running = false;
+  toast('✅ Broadcast Completed! Sent: ' + sent + ' | Failed/Blocked: ' + failed, 'success');
+}
+
+function togglePauseBroadcast() {
+  broadcastState.paused = !broadcastState.paused;
+  toast(broadcastState.paused ? '⏸️ Broadcast Paused' : '▶️ Broadcast Resumed', 'info');
+}
+
+function stopBroadcast() {
+  broadcastState.stop    = true;
+  broadcastState.running = false;
+  broadcastState.paused  = false;
 }
 
 /* ═══════════ INIT ═══════════ */
