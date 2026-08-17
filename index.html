@@ -311,6 +311,10 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
     <button class="sb-btn" onclick="nav('swapcoin',this)">
       <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87z"/></svg>Swap Coins
     </button>
+    <div class="sb-sec">Communication</div>
+    <button class="sb-btn" onclick="nav('broadcast',this)">
+      <svg viewBox="0 0 24 24"><path d="M15,10.5a3,3 0 0 1 3,3 3,3 0 0 1 -3,3 3,3 0 0 1 -3,-3 3,3 0 0 1 3,-3m0,-2c-2.76,0 -5,2.24 -5,5s2.24,5 5,5 5,-2.24 5,-5 -2.24,-5 -5,-5M3,13.5h8v-3H3v3M3,7h8V4H3v3m0,13h8v-3H3v3"/></svg>Broadcast
+    </button>
     <div class="sb-sec">Settings</div>
     <button class="sb-btn" onclick="nav('config',this)">
       <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.56-1.62.94L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Configuration
@@ -621,6 +625,47 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
         <div class="cfg-row"><div><div class="cfg-key">Referral Bonus (ETB)</div></div><input class="cfg-inp" id="cfg-rb" type="number" value="50"></div>
       </div>
       <button class="export-btn" style="font-size:12px;padding:11px 20px" onclick="saveConfig()">💾 Save Configuration</button>
+    </div>
+
+    <!-- ══════ BROADCAST ══════ -->
+    <div class="view" id="view-broadcast">
+      <div class="cfg-card">
+        <h3>📢 Telegram Broadcast Sender</h3>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">ለሁሉም የ Swap Money ቴሌግራም ተጠቃሚዎች በአንድ ላይ መልእክት መላኪያ</p>
+        
+        <div class="cfg-row">
+          <div><div class="cfg-key">Apps Script URL</div><div class="cfg-desc">Broadcast endpoint</div></div>
+          <input class="cfg-inp" id="bc-url" style="width:280px;font-size:10px" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+
+        <div class="cfg-row">
+          <div><div class="cfg-key">Admin Secret Key</div><div class="cfg-desc">Security verification</div></div>
+          <input class="cfg-inp" id="bc-key" type="password" style="width:220px;font-size:11px" placeholder="SWAP_ADMIN_SECURE_2026">
+        </div>
+
+        <div class="cfg-row">
+          <div><div class="cfg-key">Photo URL (አማራጭ)</div><div class="cfg-desc">Optional thumbnail image</div></div>
+          <input class="cfg-inp" id="bc-photo" style="width:280px;font-size:10px" placeholder="https://i.postimg.cc/...jpg">
+        </div>
+
+        <div style="margin-top:16px;margin-bottom:12px;">
+          <div class="cfg-key">Message Text (የማስታወቂያው ፅሁፍ)*</div>
+          <textarea class="cfg-inp" id="bc-text" style="width:100%;min-height:110px;resize:vertical;margin-top:5px;font-size:11px" placeholder="🎉 እንኳን ደህና መጡ! አዲስ ማስታወቂያ..."></textarea>
+        </div>
+
+        <div class="cfg-row">
+          <div><div class="cfg-key">Button Text (አማራጭ)</div><div class="cfg-desc">Action button label</div></div>
+          <input class="cfg-inp" id="bc-btn-text" style="width:220px;font-size:11px" placeholder="🚀 አሁኑኑ ይጫወቱ">
+        </div>
+
+        <div class="cfg-row">
+          <div><div class="cfg-key">Button URL (አማራጭ)</div><div class="cfg-desc">Action button link</div></div>
+          <input class="cfg-inp" id="bc-btn-url" style="width:280px;font-size:10px" placeholder="https://t.me/Swapmoney_bot/swapmoney">
+        </div>
+
+        <div id="bc-status" style="margin-top:14px;padding:12px;border-radius:10px;font-size:11px;font-weight:700;text-align:center;display:none;"></div>
+        <button class="export-btn" style="font-size:12px;padding:11px 20px;margin-top:14px;width:100%" onclick="submitBroadcast()">🚀 Send Broadcast to All Users</button>
+      </div>
     </div>
 
   </div>
@@ -1119,6 +1164,8 @@ function loadConfig(){
   document.getElementById('cfg-rb').value=CFG.rb;
   document.getElementById('cfg-key').value=CFG.adminKey||'';
   document.getElementById('syncIntervalLabel').textContent=CFG.int;
+  document.getElementById('bc-url').value=localStorage.getItem('bc_url')||'https://script.google.com/macros/s/AKfycbxDii62Bjz7KNxIFY9deeDDxnjNx1ifHu93GRxkhmpC9srZ_ZFSAtQgttQYh8o1pXmIgQ/exec';
+  document.getElementById('bc-key').value=localStorage.getItem('bc_key')||'0000';
 }
 function clearCachedConfig(){
   ['adm_url','adm_int','adm_ps','adm_mwd','adm_rb','adm_key'].forEach(function(k){
@@ -1142,6 +1189,64 @@ function sc(s){
   if(s.indexOf('ተከፍሏ')>-1||s.toLowerCase().indexOf('paid')>-1)return'paid';
   if(s.indexOf('ውድቅ')>-1||s.toLowerCase().indexOf('rej')>-1)return'reject';
   return'pending';
+}
+
+/* ═══════════ BROADCAST ═══════════ */
+function submitBroadcast(){
+  var url=document.getElementById('bc-url').value.trim();
+  var key=document.getElementById('bc-key').value.trim();
+  var text=document.getElementById('bc-text').value.trim();
+  var photo=document.getElementById('bc-photo').value.trim();
+  var btnText=document.getElementById('bc-btn-text').value.trim();
+  var btnUrl=document.getElementById('bc-btn-url').value.trim();
+  var statusEl=document.getElementById('bc-status');
+  var btn=document.querySelector('.view#view-broadcast .export-btn');
+  
+  if(!url){toast('እባክዎ Apps Script URL ያስገቡ','error');return;}
+  if(!key){toast('እባክዎ Admin Secret Key ያስገቡ','error');return;}
+  if(!text){toast('እባክዎ የማስታወቂያ ፅሁፍ ያስገቡ','error');return;}
+  
+  localStorage.setItem('bc_url',url);
+  localStorage.setItem('bc_key',key);
+  
+  if(!confirm('እርግጠኛ ነዎት ይህ መልእክት በቴሌግራም ለሁሉም ተጠቃሚዎች ይላክ?')) return;
+  
+  btn.disabled=true;
+  btn.textContent='⏳ Sending to All Users…';
+  statusEl.style.display='none';
+  
+  fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({
+      action:'sendBroadcast',
+      adminKey:key,
+      text:text,
+      photoUrl:photo,
+      btnText:btnText,
+      btnUrl:btnUrl
+    })
+  }).then(function(res){return res.json();}).then(function(data){
+    if(data.result==='success'){
+      statusEl.className='status success';
+      statusEl.innerHTML='✅ Broadcast ተልኳል!<br><b>Sent:</b> '+data.sent+' ሰዎች | <b>Failed:</b> '+data.failed;
+      statusEl.style.display='block';
+      toast('✅ Broadcast sent successfully','success');
+    }else{
+      statusEl.className='status error';
+      statusEl.textContent='❌ '+(data.message||'መላክ አልተሳካም');
+      statusEl.style.display='block';
+      toast('❌ '+(data.message||'Broadcast failed'),'error');
+    }
+  }).catch(function(e){
+    statusEl.className='status error';
+    statusEl.textContent='❌ Network Error: '+e.message;
+    statusEl.style.display='block';
+    toast('❌ Network Error: '+e.message,'error');
+  }).finally(function(){
+    btn.disabled=false;
+    btn.textContent='🚀 Send Broadcast to All Users';
+  });
 }
 
 /* ═══════════ INIT ═══════════ */
