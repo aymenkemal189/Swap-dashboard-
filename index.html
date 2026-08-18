@@ -663,7 +663,6 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
           <input class="cfg-inp" id="bc-btn-url" style="width:280px;font-size:10px" placeholder="https://t.me/Swapmoney_bot/swapmoney">
         </div>
 
-        <div id="bc-status" style="margin-top:14px;padding:12px;border-radius:10px;font-size:11px;font-weight:700;text-align:center;display:none;"></div>
         <div id="bcStatusBox" style="display:none"></div>
         <button class="export-btn" style="font-size:12px;padding:11px 20px;margin-top:14px;width:100%" onclick="submitBroadcastAdmin()">🚀 Send Broadcast to All Users</button>
       </div>
@@ -1165,8 +1164,8 @@ function loadConfig(){
   document.getElementById('cfg-rb').value=CFG.rb;
   document.getElementById('cfg-key').value=CFG.adminKey||'';
   document.getElementById('syncIntervalLabel').textContent=CFG.int;
-  document.getElementById('bc-url').value=localStorage.getItem('bc_url')||'https://script.google.com/macros/s/AKfycbxDii62Bjz7KNxIFY9deeDDxnjNx1ifHu93GRxkhmpC9srZ_ZFSAtQgttQYh8o1pXmIgQ/exec';
-  document.getElementById('bc-key').value=localStorage.getItem('bc_key')||'0000';
+  document.getElementById('bc-url').value=localStorage.getItem('bc_url')||'';
+  document.getElementById('bc-key').value=localStorage.getItem('bc_key')||'';
 }
 function clearCachedConfig(){
   ['adm_url','adm_int','adm_ps','adm_mwd','adm_rb','adm_key'].forEach(function(k){
@@ -1204,29 +1203,43 @@ async function submitBroadcastAdmin() {
   if (!text) { toast('የማስታወቂያ ፅሁፍ ያስገቡ', 'error'); return; }
   if (!confirm('እርግጠኛ ነዎት ይህ መልእክት በቴሌግራም ለሁሉም ተጠቃሚዎች ይላክ?')) return;
 
-  // 1. Fetch user list using GET getAll
-  showLoad('Fetching users list from database…');
+  // 1. Get user list — use cached D.users first, re-fetch if empty
   var users = [];
-  try {
-    var res = await fetch(CFG.url + '?action=getAll');
-    var data = await res.json();
-    if (data.users && data.users.length > 0) {
-      users = data.users;
-    } else {
-      toast('No users found in database', 'error');
+  if (D.users && D.users.length > 0) {
+    users = D.users;
+    toast('📋 ' + users.length + ' users loaded from cache', 'info');
+  } else {
+    showLoad('Fetching users list from database…');
+    try {
+      var res = await fetch(CFG.url + '?action=getAll');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+      if (data.result === 'error') throw new Error(data.message || 'Server error');
+      if (data.users && data.users.length > 0) {
+        users = data.users;
+        D.users = users;
+      } else {
+        toast('No users found in database', 'error');
+        hideLoad();
+        return;
+      }
+    } catch (err) {
+      toast('Failed to fetch user list: ' + err.message, 'error');
       hideLoad();
       return;
     }
-  } catch (err) {
-    toast('Failed to fetch user list: ' + err.message, 'error');
     hideLoad();
+  }
+
+  if (users.length === 0) {
+    toast('No users to broadcast to', 'error');
     return;
   }
-  hideLoad();
 
   // 2. Prepare Telegram Bot API Endpoint
   var botToken = document.getElementById('bc-key').value.trim();
-  if (!botToken) { toast('እባክዎ Bot Token ያስገቡ (Admin Secret Key field)', 'error'); return; }
+  if (!botToken) { toast('እባክዎ Telegram Bot Token ያስገቡ', 'error'); return; }
+  localStorage.setItem('bc_key', botToken);
   var tgEndpointPhoto = 'https://api.telegram.org/bot' + botToken + '/sendPhoto';
   var tgEndpointText  = 'https://api.telegram.org/bot' + botToken + '/sendMessage';
 
@@ -1238,15 +1251,9 @@ async function submitBroadcastAdmin() {
 
   // 3. Setup UI Control Box
   var statusBox = document.getElementById('bcStatusBox');
-  var container = document.getElementById('view-broadcast');
-  if (!statusBox) {
-    statusBox = document.createElement('div');
-    statusBox.id = 'bcStatusBox';
-    statusBox.className = 'sum-box';
-    statusBox.style.marginTop = '14px';
-    if (container) container.appendChild(statusBox);
-  }
+  statusBox.className = 'sum-box';
   statusBox.style.display = 'block';
+  statusBox.innerHTML = '';
 
   broadcastState.running = true;
   broadcastState.paused  = false;
