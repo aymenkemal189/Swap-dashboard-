@@ -631,16 +631,18 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
     <div class="view" id="view-broadcast">
       <div class="cfg-card">
         <h3>📢 Telegram Broadcast Sender</h3>
-        <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">ለሁሉም የ Swap Money ቴሌግራም ተጠቃሚዎች በአንድ ላይ መልእክት መላኪያ</p>
-        
-        <div class="cfg-row" style="display:none">
-          <div><div class="cfg-key">Apps Script URL</div><div class="cfg-desc">Broadcast endpoint</div></div>
-          <input class="cfg-inp" id="bc-url" style="width:280px;font-size:10px" placeholder="https://script.google.com/macros/s/.../exec">
-        </div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">ለሁሉም የ Swap Money ቴሌግራም ተጠቃሚዎች በአንድ ላይ መልእክት መላኪያ — <b style="color:var(--green)">Railway Server ብቻውን ያጠናቅቃል ✅</b></p>
 
-        <div class="cfg-row">
-          <div><div class="cfg-key">Telegram Bot Token</div><div class="cfg-desc">የቴሌግራም Bot API Token</div></div>
-          <input class="cfg-inp" id="bc-key" type="password" style="width:220px;font-size:11px" placeholder="1234567890:AAE_...">
+        <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:14px;border-left:3px solid var(--gold)">
+          <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:8px">🔧 Railway Server Settings</div>
+          <div class="cfg-row" style="margin-bottom:8px">
+            <div><div class="cfg-key">Railway URL</div><div class="cfg-desc">Deploy ካደረጉ በኋላ ይለጥፉ</div></div>
+            <input class="cfg-inp" id="bc-railway-url" style="width:280px;font-size:10px" placeholder="https://swap-broadcast.up.railway.app">
+          </div>
+          <div class="cfg-row">
+            <div><div class="cfg-key">Admin Key</div><div class="cfg-desc">Server security key</div></div>
+            <input class="cfg-inp" id="bc-admin-key" type="password" style="width:200px;font-size:11px" placeholder="SWAP_ADMIN_2026">
+          </div>
         </div>
 
         <div class="cfg-row">
@@ -665,6 +667,16 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
 
         <div id="bcStatusBox" style="display:none"></div>
         <button class="export-btn" style="font-size:12px;padding:11px 20px;margin-top:14px;width:100%" onclick="submitBroadcastAdmin()">🚀 Send Broadcast to All Users</button>
+
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="act-btn act-edit" style="flex:1;font-size:11px" onclick="pauseBroadcast()">⏸️ Pause</button>
+          <button class="act-btn act-approve" style="flex:1;font-size:11px" onclick="resumeBroadcast()">▶️ Resume</button>
+          <button class="act-btn act-reject" style="flex:1;font-size:11px" onclick="stopBroadcastServer()">⏹️ Stop</button>
+        </div>
+
+        <!-- hidden legacy fields -->
+        <input id="bc-url" style="display:none">
+        <input id="bc-key" style="display:none">
       </div>
     </div>
 
@@ -1164,8 +1176,8 @@ function loadConfig(){
   document.getElementById('cfg-rb').value=CFG.rb;
   document.getElementById('cfg-key').value=CFG.adminKey||'';
   document.getElementById('syncIntervalLabel').textContent=CFG.int;
-  document.getElementById('bc-url').value=localStorage.getItem('bc_url')||'';
-  document.getElementById('bc-key').value=localStorage.getItem('bc_key')||'8925694023:AAE_ITYjKOeCkcsR_gpAeU2WobQT3lGqWMw';
+  document.getElementById('bc-railway-url').value=localStorage.getItem('railway_url')||'';
+  document.getElementById('bc-admin-key').value=localStorage.getItem('admin_key')||'SWAP_ADMIN_2026';
 }
 function clearCachedConfig(){
   ['adm_url','adm_int','adm_ps','adm_mwd','adm_rb','adm_key'].forEach(function(k){
@@ -1191,170 +1203,138 @@ function sc(s){
   return'pending';
 }
 
-/* ═══════════ BROADCAST ═══════════ */
-var broadcastState = { running: false, paused: false, stop: false };
+/* ═══════════ BROADCAST (Railway Server Mode) ═══════════ */
+
+// Set this to your Railway server URL after deploy
+var RAILWAY_URL = localStorage.getItem('railway_url') || '';
+var ADMIN_KEY   = localStorage.getItem('admin_key')   || 'SWAP_ADMIN_2026';
+
+var bcPollTimer = null;
 
 async function submitBroadcastAdmin() {
-  var text = document.getElementById('bc-text').value.trim();
-  var photo = document.getElementById('bc-photo').value.trim();
+  var text    = document.getElementById('bc-text').value.trim();
+  var photo   = document.getElementById('bc-photo').value.trim();
   var btnText = document.getElementById('bc-btn-text').value.trim();
-  var btnUrl = document.getElementById('bc-btn-url').value.trim();
+  var btnUrl  = document.getElementById('bc-btn-url').value.trim();
+  var railUrl = document.getElementById('bc-railway-url').value.trim();
+  var adminKey= document.getElementById('bc-admin-key').value.trim();
 
-  if (!text) { toast('የማስታወቂያ ፅሁፍ ያስገቡ', 'error'); return; }
+  if (!text)    { toast('የማስታወቂያ ፅሁፍ ያስገቡ', 'error'); return; }
+  if (!railUrl) { toast('Railway Server URL ያስገቡ', 'error'); return; }
+
   if (!confirm('እርግጠኛ ነዎት ይህ መልእክት በቴሌግራም ለሁሉም ተጠቃሚዎች ይላክ?')) return;
 
-  // 1. Get user list — use cached D.users first, re-fetch if empty
-  var users = [];
-  if (D.users && D.users.length > 0) {
-    users = D.users;
-    toast('📋 ' + users.length + ' users loaded from cache', 'info');
-  } else {
-    showLoad('Fetching users list from database…');
-    try {
-      var res = await fetch(CFG.url + '?action=getAll');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var data = await res.json();
-      if (data.result === 'error') throw new Error(data.message || 'Server error');
-      if (data.users && data.users.length > 0) {
-        users = data.users;
-        D.users = users;
-      } else {
-        toast('No users found in database', 'error');
-        hideLoad();
-        return;
-      }
-    } catch (err) {
-      toast('Failed to fetch user list: ' + err.message, 'error');
-      hideLoad();
-      return;
-    }
-    hideLoad();
-  }
+  // Save to localStorage
+  localStorage.setItem('railway_url', railUrl);
+  localStorage.setItem('admin_key',   adminKey);
+  RAILWAY_URL = railUrl;
+  ADMIN_KEY   = adminKey;
 
-  if (users.length === 0) {
-    toast('No users to broadcast to', 'error');
-    return;
-  }
-
-  // 2. Prepare Telegram Bot API Endpoint
-  var botToken = document.getElementById('bc-key').value.trim();
-  if (!botToken) { toast('እባክዎ Telegram Bot Token ያስገቡ', 'error'); return; }
-  localStorage.setItem('bc_key', botToken);
-  var tgEndpointPhoto = 'https://api.telegram.org/bot' + botToken + '/sendPhoto';
-  var tgEndpointText  = 'https://api.telegram.org/bot' + botToken + '/sendMessage';
-
-  var replyMarkup = null;
-  if (btnText && btnUrl && btnUrl.toLowerCase().indexOf('http') === 0) {
-    replyMarkup = JSON.stringify({ inline_keyboard: [[ { text: btnText, url: btnUrl } ]] });
-  }
-  if (photo && photo.toLowerCase().indexOf('http') !== 0) photo = '';
-
-  // 3. Setup UI Control Box
   var statusBox = document.getElementById('bcStatusBox');
   statusBox.className = 'sum-box';
   statusBox.style.display = 'block';
-  statusBox.innerHTML = '';
+  statusBox.innerHTML = '<div style="color:var(--gold);font-size:13px;font-weight:800">⏳ Starting broadcast on server…</div>';
 
-  broadcastState.running = true;
-  broadcastState.paused  = false;
-  broadcastState.stop    = false;
-
-  var sent = 0, failed = 0, total = users.length;
-
-  for (var i = 0; i < total; i++) {
-    if (broadcastState.stop) {
-      toast('⏹️ Broadcast stopped by admin', 'info');
-      break;
-    }
-
-    while (broadcastState.paused) {
-      statusBox.innerHTML =
-        '<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:6px">⏸️ Broadcast Paused</div>' +
-        '<div style="font-size:11px;color:var(--text);margin-bottom:8px">Sent: <b style="color:var(--green)">' + sent + '</b> | Failed/Blocked: <b style="color:var(--red)">' + failed + '</b> | Total: <b>' + total + '</b></div>' +
-        '<div style="margin-top:8px"><button class="act-btn act-approve" onclick="togglePauseBroadcast()">▶️ Resume</button> <button class="act-btn act-reject" onclick="stopBroadcast()">⏹️ Stop</button></div>';
-      await new Promise(function(r){ setTimeout(r, 1000); });
-      if (broadcastState.stop) break;
-    }
-    if (broadcastState.stop) break;
-
-    var uid = users[i].userId;
-    if (!uid || uid === 'None' || uid === 'undefined') continue;
-
-    var success = false;
-
-    // Try Photo send if photo provided
-    if (photo) {
-      try {
-        var bodyObj = { chat_id: uid, photo: photo, caption: text, parse_mode: 'HTML' };
-        if (replyMarkup) bodyObj.reply_markup = replyMarkup;
-        var resp = await fetch(tgEndpointPhoto, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyObj)
-        });
-        var resData = await resp.json();
-        if (resData && resData.ok) {
-          success = true;
-        } else if (resData && resData.error_code === 429) {
-          var waitSec = (resData.parameters && resData.parameters.retry_after) ? resData.parameters.retry_after : 3;
-          statusBox.innerHTML = '<div style="color:var(--orange)">⚠️ Telegram Rate Limit hit. Waiting ' + waitSec + 's…</div>';
-          await new Promise(function(r){ setTimeout(r, (waitSec + 1) * 1000); });
-          i--; continue;
-        }
-      } catch (e) {}
-    }
-
-    // Fallback: text message
-    if (!success) {
-      try {
-        var bodyObj2 = { chat_id: uid, text: text, parse_mode: 'HTML' };
-        if (replyMarkup) bodyObj2.reply_markup = replyMarkup;
-        var resp2 = await fetch(tgEndpointText, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyObj2)
-        });
-        var resData2 = await resp2.json();
-        if (resData2 && resData2.ok) {
-          success = true;
-        } else if (resData2 && resData2.error_code === 429) {
-          var waitSec2 = (resData2.parameters && resData2.parameters.retry_after) ? resData2.parameters.retry_after : 3;
-          statusBox.innerHTML = '<div style="color:var(--orange)">⚠️ Telegram Rate Limit hit. Waiting ' + waitSec2 + 's…</div>';
-          await new Promise(function(r){ setTimeout(r, (waitSec2 + 1) * 1000); });
-          i--; continue;
-        }
-      } catch (e) {}
-    }
-
-    if (success) { sent++; } else { failed++; }
-
-    // Live Progress UI
-    var pct = Math.round(((i + 1) / total) * 100);
-    statusBox.innerHTML =
-      '<div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:6px">🚀 Live Broadcast in Progress: ' + pct + '%</div>' +
-      '<div style="font-size:11px;color:var(--text);margin-bottom:8px">Sent: <b style="color:var(--green)">' + sent + '</b> | Failed/Blocked: <b style="color:var(--red)">' + failed + '</b> | Total: <b>' + total + '</b></div>' +
-      '<div style="width:100%;height:8px;background:var(--card2);border-radius:10px;overflow:hidden;margin-bottom:10px">' +
-        '<div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .2s"></div>' +
-      '</div>' +
-      '<div><button class="act-btn act-edit" onclick="togglePauseBroadcast()">⏸️ Pause</button> <button class="act-btn act-reject" onclick="stopBroadcast()">⏹️ Stop</button></div>';
-
-    // ~28 msgs/sec (Telegram rate limit safe)
-    await new Promise(function(r){ setTimeout(r, 35); });
+  // Prepare payload
+  var payload = { text: text };
+  if (photo && photo.startsWith('http'))  payload.photo   = photo;
+  if (btnText && btnUrl && btnUrl.startsWith('http')) {
+    payload.btnText = btnText;
+    payload.btnUrl  = btnUrl;
   }
 
-  broadcastState.running = false;
-  toast('✅ Broadcast Completed! Sent: ' + sent + ' | Failed/Blocked: ' + failed, 'success');
+  try {
+    var res = await fetch(railUrl + '/broadcast/start', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body:    JSON.stringify(payload)
+    });
+    var data = await res.json();
+
+    if (!res.ok) {
+      toast('❌ ' + (data.error || 'Server error'), 'error');
+      statusBox.style.display = 'none';
+      return;
+    }
+
+    toast('🚀 Broadcast started! ' + data.total + ' users — Browser ቢዘጋ server ብቻውን ያጠናቅቃል ✅', 'success');
+    startPolling();
+
+  } catch (e) {
+    toast('❌ Cannot reach Railway server: ' + e.message, 'error');
+    statusBox.style.display = 'none';
+  }
 }
 
-function togglePauseBroadcast() {
-  broadcastState.paused = !broadcastState.paused;
-  toast(broadcastState.paused ? '⏸️ Broadcast Paused' : '▶️ Broadcast Resumed', 'info');
+// ═══ POLL STATUS every 3 seconds ═══
+function startPolling() {
+  if (bcPollTimer) clearInterval(bcPollTimer);
+  bcPollTimer = setInterval(pollStatus, 3000);
+  pollStatus(); // immediate first call
 }
 
-function stopBroadcast() {
-  broadcastState.stop    = true;
-  broadcastState.running = false;
-  broadcastState.paused  = false;
+async function pollStatus() {
+  if (!RAILWAY_URL) return;
+  try {
+    var res  = await fetch(RAILWAY_URL + '/broadcast/status', { headers: { 'X-Admin-Key': ADMIN_KEY } });
+    var data = await res.json();
+    renderBroadcastStatus(data);
+    if (!data.running) {
+      clearInterval(bcPollTimer);
+      bcPollTimer = null;
+    }
+  } catch (e) {}
+}
+
+function renderBroadcastStatus(d) {
+  var statusBox = document.getElementById('bcStatusBox');
+  if (!statusBox) return;
+  statusBox.style.display = 'block';
+
+  if (!d.running && d.total === 0) {
+    statusBox.style.display = 'none';
+    return;
+  }
+
+  var pauseBtn = d.paused
+    ? '<button class="act-btn act-approve" onclick="resumeBroadcast()">▶️ Resume</button>'
+    : '<button class="act-btn act-edit"    onclick="pauseBroadcast()">⏸️ Pause</button>';
+
+  var statusLabel = d.paused
+    ? '<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:6px">⏸️ Broadcast Paused</div>'
+    : d.running
+      ? '<div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:6px">🚀 Live on Server: ' + d.pct + '%</div>'
+      : '<div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:6px">✅ Broadcast Complete</div>';
+
+  statusBox.innerHTML =
+    statusLabel +
+    '<div style="font-size:11px;color:var(--text);margin-bottom:8px">' +
+      'Sent: <b style="color:var(--green)">' + d.sent + '</b> | ' +
+      'Failed: <b style="color:var(--red)">' + d.failed + '</b> | ' +
+      'Total: <b>' + d.total + '</b>' +
+    '</div>' +
+    '<div style="width:100%;height:8px;background:var(--card2);border-radius:10px;overflow:hidden;margin-bottom:10px">' +
+      '<div style="width:' + d.pct + '%;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .3s"></div>' +
+    '</div>' +
+    (d.lastLog && d.lastLog.length ? '<div style="font-size:10px;color:var(--text2);margin-bottom:8px">' + d.lastLog.join('<br>') + '</div>' : '') +
+    (d.running
+      ? '<div>' + pauseBtn + ' <button class="act-btn act-reject" onclick="stopBroadcastServer()">⏹️ Stop</button></div>'
+      : '');
+}
+
+async function pauseBroadcast() {
+  await fetch(RAILWAY_URL + '/broadcast/pause', { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY } });
+  toast('⏸️ Paused', 'info');
+}
+async function resumeBroadcast() {
+  await fetch(RAILWAY_URL + '/broadcast/resume', { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY } });
+  toast('▶️ Resumed', 'info');
+}
+async function stopBroadcastServer() {
+  await fetch(RAILWAY_URL + '/broadcast/stop', { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY } });
+  toast('⏹️ Stopped', 'info');
+  clearInterval(bcPollTimer);
+  bcPollTimer = null;
 }
 
 /* ═══════════ INIT ═══════════ */
