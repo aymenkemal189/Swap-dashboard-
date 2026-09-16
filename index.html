@@ -1,9 +1,9 @@
-<! html>
+<!DOCTYPE html>
 <html lang="am">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Swap Money — Admin Dashboard</title>
+<title>Swap Money — Admin V3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
 :root{
@@ -34,8 +34,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .sb-foot{padding:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted)}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.5s infinite;margin-right:4px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* OVERLAY FOR MOBILE SIDEBAR */
 .sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:90;display:none}
 .sb-overlay.show{display:block}
 
@@ -54,9 +52,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .search-wrap input::placeholder{color:var(--muted)}
 .search-wrap svg{width:13px;height:13px;fill:var(--muted);flex-shrink:0}
 .content{padding:16px 20px;flex:1}
-
-/* MOBILE TOGGLE */
 .mob-menu-btn{display:none;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--gold);font-weight:800;font-size:12px;cursor:pointer}
+
+/* ══ V3: SLIM SYNC BAR — no full-screen blur ══ */
+.sync-bar{position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;pointer-events:none;display:none}
+.sync-bar.show{display:block}
+.sync-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:0 2px 2px 0;animation:syncAnim 1.6s ease-in-out infinite}
+@keyframes syncAnim{0%{width:0%;opacity:1}65%{width:80%;opacity:1}100%{width:100%;opacity:0}}
+.sync-pill{display:none;align-items:center;gap:5px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.22);border-radius:7px;padding:5px 10px;font-size:10px;font-weight:700;color:var(--gold)}
+.sync-pill.show{display:flex}
+.sync-spinner{width:11px;height:11px;border:2px solid rgba(255,215,0,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* PAGE VIEWS */
 .view{display:none}.view.active{display:block}
@@ -78,7 +84,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .tf-btn:hover{border-color:rgba(255,215,0,.3);color:var(--gold)}
 .tf-btn.active{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.35);color:var(--gold)}
 
-/* TABLE CARD & SORTING */
+/* TABLE */
 .tbl-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
 .tbl-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px}
 .tbl-hdr h3{font-size:13px;font-weight:800}
@@ -193,14 +199,12 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
 .toast-item.info{border-color:rgba(255,215,0,.35);color:var(--gold)}
 @keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 
-/* LOADING */
-.loading{position:fixed;inset:0;background:rgba(8,9,15,.88);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px}
-.loading.show{display:flex}
-.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading p{font-size:12px;color:var(--muted);font-weight:600}
+/* ══ BROADCAST ══ */
+.fmt-btn{background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:4px 9px;color:var(--text);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:.15s;min-width:28px;text-align:center}
+.fmt-btn:hover{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.35);color:var(--gold)}
+.bc-seg-panel{padding:4px 0}
 
-/* MOBILE RESPONSIVE CSS */
+/* MOBILE */
 @media(max-width:768px){
   .sb{transform:translateX(-100%);width:220px}
   .sb.open{transform:translateX(0)}
@@ -211,6 +215,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
   .topbar{padding:10px 12px}
   .search-wrap{width:100%;margin-top:4px}
   .content{padding:12px 10px}
+  #bcComposerGrid{grid-template-columns:1fr !important}
 }
 @media(max-width:480px){
   .stat-row{grid-template-columns:1fr}
@@ -220,11 +225,12 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
 </head>
 <body>
 
-<div class="loading" id="loading"><div class="spinner"></div><p id="loadingTxt">Loading…</p></div>
+<!-- V3: slim sync bar at very top — no blur, no overlay -->
+<div class="sync-bar" id="syncBar"><div class="sync-bar-fill"></div></div>
 <div class="toast-wrap" id="toastWrap"></div>
 <div class="sb-overlay" id="sbOverlay" onclick="toggleMobileSidebar(false)"></div>
 
-<!-- User Detail Modal -->
+<!-- User Modal -->
 <div class="modal-bg" id="userModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('userModal')">✕ Close</button>
@@ -233,7 +239,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
   </div>
 </div>
 
-<!-- Edit Balance Modal -->
+<!-- Balance Modal -->
 <div class="modal-bg" id="balModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('balModal')">✕ Close</button>
@@ -248,7 +254,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
   </div>
 </div>
 
-<!-- Edit SC Modal -->
+<!-- SC Modal -->
 <div class="modal-bg" id="scModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('scModal')">✕ Close</button>
@@ -263,7 +269,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
   </div>
 </div>
 
-<!-- Edit Refs Modal -->
+<!-- Refs Modal -->
 <div class="modal-bg" id="refModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('refModal')">✕ Close</button>
@@ -272,36 +278,33 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
     <div class="modal-field"><label>Current Referrals</label><input id="refAdjCur" readonly style="color:var(--green)"></div>
     <div class="modal-field"><label>New Referrals Count</label><input id="refAdjNew" type="number" placeholder="Set exact count"></div>
     <div class="modal-actions">
-      <button class="m-btn primary" onclick="submitRefAdj()">Update Referrals</button>
+      <button class="m-btn primary" onclick="submitRefAdj()">Update Refs</button>
       <button class="m-btn secondary" onclick="closeModal('refModal')">Cancel</button>
     </div>
   </div>
 </div>
 
 <!-- SIDEBAR -->
-<nav class="sb" id="sidebar">
+<div class="sb" id="sidebar">
   <div class="sb-logo">
     <div class="sb-logo-icon">S</div>
-    <div class="sb-logo-text">Swap <span>Admin</span></div>
+    <div class="sb-logo-text">Swap<span>Money</span></div>
   </div>
-  <div class="sb-nav">
-    <div class="sb-sec">Overview</div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Main</div>
     <button class="sb-btn active" onclick="nav('overview',this)">
-      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard
-    </button>
-    <button class="sb-btn" onclick="nav('analytics',this)">
-      <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>Analytics
+      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Overview
     </button>
     <div class="sb-sec">Users</div>
     <button class="sb-btn" onclick="nav('users',this)">
-      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>All Users
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>All Users
     </button>
     <button class="sb-btn" onclick="nav('newusers',this)">
       <svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>New Users
       <span class="sb-badge" id="newBadge">0</span>
     </button>
     <button class="sb-btn" onclick="nav('referrals',this)">
-      <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2z"/></svg>Referral Tree
+      <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>Referrals
     </button>
     <div class="sb-sec">Finance</div>
     <button class="sb-btn" onclick="nav('withdrawals',this)">
@@ -309,22 +312,24 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       <span class="sb-badge" id="pendBadge">0</span>
     </button>
     <button class="sb-btn" onclick="nav('swapcoin',this)">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87z"/></svg>Swap Coins
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>Swap Coins
     </button>
-    <div class="sb-sec">Communication</div>
+    <div class="sb-sec">Tools</div>
+    <button class="sb-btn" onclick="nav('analytics',this)">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>Analytics
+    </button>
     <button class="sb-btn" onclick="nav('broadcast',this)">
-      <svg viewBox="0 0 24 24"><path d="M15,10.5a3,3 0 0 1 3,3 3,3 0 0 1 -3,3 3,3 0 0 1 -3,-3 3,3 0 0 1 3,-3m0,-2c-2.76,0 -5,2.24 -5,5s2.24,5 5,5 5,-2.24 5,-5 -2.24,-5 -5,-5M3,13.5h8v-3H3v3M3,7h8V4H3v3m0,13h8v-3H3v3"/></svg>Broadcast
+      <svg viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.39.4.53.8 1.07 1.2 1.61.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z"/></svg>Broadcast
     </button>
-    <div class="sb-sec">Settings</div>
     <button class="sb-btn" onclick="nav('config',this)">
-      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.56-1.62.94L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Configuration
+      <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>Config
     </button>
-  </div>
+  </nav>
   <div class="sb-foot">
     <span class="live-dot"></span>Auto-sync every <span id="syncIntervalLabel">30</span>s<br>
-    <span id="lastSync" style="color:var(--dim);font-size:9px">Not synced yet</span>
+    <span id="lastSync" style="font-size:9px">Not synced yet</span>
   </div>
-</nav>
+</div>
 
 <!-- MAIN -->
 <div class="main">
@@ -333,17 +338,21 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       <button class="mob-menu-btn" onclick="toggleMobileSidebar(true)">☰ Menu</button>
       <div>
         <h2 id="pageTitle">Dashboard Overview</h2>
-        <p>Swap Money Admin Panel V3</p>
+        <p>Swap Money Admin V3</p>
       </div>
     </div>
     <div class="topbar-right">
+      <!-- V3 sync pill — visible only while syncing -->
+      <div class="sync-pill" id="syncPill">
+        <div class="sync-spinner"></div>
+        <span id="syncPillTxt">Syncing…</span>
+      </div>
       <div class="search-wrap">
         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input type="text" placeholder="Search users, IDs…" oninput="globalSearch(this.value)">
+        <input placeholder="Search users…" oninput="globalSearch(this.value)">
       </div>
       <button class="tb-pill" onclick="loadAll()">
-        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-        Refresh
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>Sync
       </button>
       <div class="tb-pill" style="color:var(--green);border-color:rgba(16,185,129,.25)">
         <span class="live-dot"></span>Live
@@ -353,17 +362,17 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
 
   <div class="content">
 
-    <!-- ══════ OVERVIEW ══════ -->
+    <!-- OVERVIEW -->
     <div class="view active" id="view-overview">
       <div class="stat-row">
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(255,215,0,.12)"><svg viewBox="0 0 24 24" style="fill:var(--gold)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+          <div class="stat-icon" style="background:rgba(255,215,0,.12)"><svg viewBox="0 0 24 24" style="fill:var(--gold)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
           <div class="stat-label">Total Users</div>
           <div class="stat-val" id="ov-users">—</div>
-          <div class="stat-sub up" id="ov-newu">↑ Loading…</div>
+          <div class="stat-sub up" id="ov-newu">↑ — in period</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(16,185,129,.12)"><svg viewBox="0 0 24 24" style="fill:var(--green)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87z"/></svg></div>
+          <div class="stat-icon" style="background:rgba(16,185,129,.12)"><svg viewBox="0 0 24 24" style="fill:var(--green)"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>
           <div class="stat-label">Total Balance</div>
           <div class="stat-val" id="ov-bal">—</div>
           <div class="stat-sub nu" id="ov-avg">Avg: —</div>
@@ -381,7 +390,6 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
           <div class="stat-sub nu">Points</div>
         </div>
       </div>
-
       <div class="tf-row">
         <span class="tf-label">Period:</span>
         <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
@@ -392,7 +400,6 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
         <button class="tf-btn" onclick="setTF(720,this)">30D</button>
         <button class="tf-btn" onclick="setTF(0,this)">All</button>
       </div>
-
       <div class="two-col">
         <div class="tbl-card">
           <div class="tbl-hdr"><h3>📅 New Registrations</h3><span id="newRegLabel" style="font-size:11px;color:var(--gold);font-weight:700"></span></div>
@@ -402,7 +409,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
           </div>
         </div>
         <div class="tbl-card">
-          <div class="tbl-hdr"><h3>🏆 Top Earners (Click to Edit)</h3></div>
+          <div class="tbl-hdr"><h3>🏆 Top Earners</h3></div>
           <div class="bar-chart" id="topChart"></div>
         </div>
       </div>
@@ -426,16 +433,10 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       </div>
     </div>
 
-    <!-- ══════ ALL USERS ══════ -->
+    <!-- ALL USERS -->
     <div class="view" id="view-users">
       <div class="tf-row"><span class="tf-label">Period:</span>
-        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
-        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
-        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
-        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
-        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
-        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
-        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button><button class="tf-btn" onclick="setTF(12,this)">12H</button><button class="tf-btn" onclick="setTF(24,this)">24H</button><button class="tf-btn" onclick="setTF(48,this)">48H</button><button class="tf-btn" onclick="setTF(168,this)">7D</button><button class="tf-btn" onclick="setTF(720,this)">30D</button><button class="tf-btn" onclick="setTF(0,this)">All</button>
       </div>
       <div class="tbl-card">
         <div class="tbl-hdr"><h3>👥 All Users</h3>
@@ -453,8 +454,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
             <th onclick="toggleSort('users',3)">Ads <span class="sort-icon" id="s_users_3"></span></th>
             <th onclick="toggleSort('users',6)">Refs <span class="sort-icon" id="s_users_6"></span></th>
             <th onclick="toggleSort('users',4)">Joined <span class="sort-icon" id="s_users_4"></span></th>
-            <th>Ref By</th>
-            <th>Actions</th>
+            <th>Ref By</th><th>Actions</th>
           </tr></thead>
           <tbody id="usersBody"></tbody></table>
         </div>
@@ -462,16 +462,10 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       </div>
     </div>
 
-    <!-- ══════ NEW USERS ══════ -->
+    <!-- NEW USERS -->
     <div class="view" id="view-newusers">
       <div class="tf-row"><span class="tf-label">Period:</span>
-        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
-        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
-        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
-        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
-        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
-        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
-        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button><button class="tf-btn" onclick="setTF(12,this)">12H</button><button class="tf-btn" onclick="setTF(24,this)">24H</button><button class="tf-btn" onclick="setTF(48,this)">48H</button><button class="tf-btn" onclick="setTF(168,this)">7D</button><button class="tf-btn" onclick="setTF(720,this)">30D</button><button class="tf-btn" onclick="setTF(0,this)">All</button>
       </div>
       <div class="tbl-card">
         <div class="tbl-hdr"><h3>🆕 New Registrations</h3><button class="export-btn" onclick="exportCSV('newusers')">⬇ CSV</button></div>
@@ -489,7 +483,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       </div>
     </div>
 
-    <!-- ══════ REFERRALS ══════ -->
+    <!-- REFERRALS -->
     <div class="view" id="view-referrals">
       <div class="tbl-card" style="padding:16px;margin-bottom:12px">
         <h3 style="font-size:13px;font-weight:800;margin-bottom:12px">🌳 Trace Referral Chain</h3>
@@ -511,16 +505,10 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       </div>
     </div>
 
-    <!-- ══════ WITHDRAWALS ══════ -->
+    <!-- WITHDRAWALS -->
     <div class="view" id="view-withdrawals">
       <div class="tf-row"><span class="tf-label">Period:</span>
-        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
-        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
-        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
-        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
-        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
-        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
-        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button><button class="tf-btn" onclick="setTF(12,this)">12H</button><button class="tf-btn" onclick="setTF(24,this)">24H</button><button class="tf-btn" onclick="setTF(48,this)">48H</button><button class="tf-btn" onclick="setTF(168,this)">7D</button><button class="tf-btn" onclick="setTF(720,this)">30D</button><button class="tf-btn" onclick="setTF(0,this)">All</button>
       </div>
       <div class="stat-row" style="grid-template-columns:repeat(3,1fr)">
         <div class="stat-card"><div class="stat-label">Total Withdrawn</div><div class="stat-val" id="wd-total">—</div></div>
@@ -540,11 +528,9 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
           <table><thead><tr>
             <th onclick="toggleSort('withdrawals',0)">Date <span class="sort-icon" id="s_withdrawals_0"></span></th>
             <th onclick="toggleSort('withdrawals',1)">User ID <span class="sort-icon" id="s_withdrawals_1"></span></th>
-            <th>Method</th>
-            <th>Account</th>
+            <th>Method</th><th>Account</th>
             <th onclick="toggleSort('withdrawals',4)">Amount <span class="sort-icon" id="s_withdrawals_4"></span></th>
-            <th>Status</th>
-            <th>Action</th>
+            <th>Status</th><th>Action</th>
           </tr></thead>
           <tbody id="wdBody"></tbody></table>
         </div>
@@ -552,7 +538,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       </div>
     </div>
 
-    <!-- ══════ SWAP COINS ══════ -->
+    <!-- SWAP COINS -->
     <div class="view" id="view-swapcoin">
       <div class="stat-row" style="grid-template-columns:repeat(3,1fr)">
         <div class="stat-card"><div class="stat-label">Total SC Issued</div><div class="stat-val" id="sc-total">—</div></div>
@@ -560,7 +546,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
         <div class="stat-card"><div class="stat-label">Top SC Holder</div><div class="stat-val" id="sc-top" style="font-size:15px">—</div></div>
       </div>
       <div class="tbl-card">
-        <div class="tbl-hdr"><h3>🪙 SC Holders (Click Edit SC)</h3><button class="export-btn" onclick="exportCSV('sc')">⬇ CSV</button></div>
+        <div class="tbl-hdr"><h3>🪙 SC Holders</h3><button class="export-btn" onclick="exportCSV('sc')">⬇ CSV</button></div>
         <div class="tbl-wrap">
           <table><thead><tr>
             <th onclick="toggleSort('sc',0)">User ID <span class="sort-icon" id="s_sc_0"></span></th>
@@ -574,16 +560,10 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       </div>
     </div>
 
-    <!-- ══════ ANALYTICS ══════ -->
+    <!-- ANALYTICS -->
     <div class="view" id="view-analytics">
       <div class="tf-row"><span class="tf-label">Period:</span>
-        <button class="tf-btn active" onclick="setTF(1,this)">1H</button>
-        <button class="tf-btn" onclick="setTF(12,this)">12H</button>
-        <button class="tf-btn" onclick="setTF(24,this)">24H</button>
-        <button class="tf-btn" onclick="setTF(48,this)">48H</button>
-        <button class="tf-btn" onclick="setTF(168,this)">7D</button>
-        <button class="tf-btn" onclick="setTF(720,this)">30D</button>
-        <button class="tf-btn" onclick="setTF(0,this)">All</button>
+        <button class="tf-btn active" onclick="setTF(1,this)">1H</button><button class="tf-btn" onclick="setTF(12,this)">12H</button><button class="tf-btn" onclick="setTF(24,this)">24H</button><button class="tf-btn" onclick="setTF(48,this)">48H</button><button class="tf-btn" onclick="setTF(168,this)">7D</button><button class="tf-btn" onclick="setTF(720,this)">30D</button><button class="tf-btn" onclick="setTF(0,this)">All</button>
       </div>
       <div class="stat-row">
         <div class="stat-card"><div class="stat-label">Total Ads</div><div class="stat-val" id="an-ads">—</div></div>
@@ -592,7 +572,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
         <div class="stat-card"><div class="stat-label">Balance = 50</div><div class="stat-val" id="an-lo">—</div></div>
       </div>
       <div class="two-col">
-        <div class="tbl-card"><div class="tbl-hdr"><h3>📊 Top 20 by Balance (Click to Edit)</h3></div><div class="bar-chart" id="an-chart"></div></div>
+        <div class="tbl-card"><div class="tbl-hdr"><h3>📊 Top 20 by Balance</h3></div><div class="bar-chart" id="an-chart"></div></div>
         <div class="tbl-card">
           <div class="tbl-hdr"><h3>🔗 Top Referrers</h3></div>
           <div class="tbl-wrap" style="max-height:340px">
@@ -603,7 +583,7 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       </div>
     </div>
 
-    <!-- ══════ CONFIG ══════ -->
+    <!-- CONFIG -->
     <div class="view" id="view-config">
       <div class="cfg-card">
         <h3>⚙️ Script Settings</h3>
@@ -627,147 +607,188 @@ tbody td{padding:9px 12px;font-size:11.5px;font-weight:500;white-space:nowrap}
       <button class="export-btn" style="font-size:12px;padding:11px 20px" onclick="saveConfig()">💾 Save Configuration</button>
     </div>
 
-    <!-- ══════ BROADCAST ══════ -->
+    <!-- BROADCAST V3 -->
     <div class="view" id="view-broadcast">
-      <div class="cfg-card">
-        <h3>📢 Telegram Broadcast Sender</h3>
-        <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">ለሁሉም የ Swap Money ቴሌግራም ተጠቃሚዎች በአንድ ላይ መልእክት መላኪያ — <b style="color:var(--green)">Railway Server ብቻውን ያጠናቅቃል ✅</b></p>
 
-        <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:14px;border-left:3px solid var(--gold)">
-          <div style="font-size:11px;font-weight:800;color:var(--gold);margin-bottom:8px">🔧 Railway Server Settings</div>
-          <div class="cfg-row" style="margin-bottom:8px">
-            <div><div class="cfg-key">Railway URL</div><div class="cfg-desc">Deploy ካደረጉ በኋላ ይለጥፉ</div></div>
-            <input class="cfg-inp" id="bc-railway-url" style="width:280px;font-size:10px" placeholder="https://swap-broadcast.up.railway.app">
-          </div>
-          <div class="cfg-row">
-            <div><div class="cfg-key">Admin Key</div><div class="cfg-desc">Server security key</div></div>
-            <input class="cfg-inp" id="bc-admin-key" type="password" style="width:200px;font-size:11px" placeholder="SWAP_ADMIN_2026">
+      <!-- Server Settings -->
+      <div class="cfg-card" style="margin-bottom:12px">
+        <h3>🔧 Railway Server Settings</h3>
+        <div class="cfg-row">
+          <div><div class="cfg-key">Railway URL</div><div class="cfg-desc">Deploy ካደረጉ በኋላ ይለጥፉ</div></div>
+          <input class="cfg-inp" id="bc-railway-url" style="width:280px;font-size:10px" placeholder="https://swap-broadcast.up.railway.app">
+        </div>
+        <div class="cfg-row">
+          <div><div class="cfg-key">Admin Key</div><div class="cfg-desc">Server security key</div></div>
+          <input class="cfg-inp" id="bc-admin-key" type="password" style="width:200px;font-size:11px" placeholder="SWAP_ADMIN_2026">
+        </div>
+      </div>
+
+      <!-- Segment Targeting -->
+      <div class="cfg-card" style="margin-bottom:12px">
+        <h3>🎯 Target Audience</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="bcSegTabs">
+          <button class="tf-btn active" onclick="bcSetSeg('all',this)">👥 All Users</button>
+          <button class="tf-btn" onclick="bcSetSeg('birr',this)">💰 By Birr Amount</button>
+          <button class="tf-btn" onclick="bcSetSeg('pending',this)">⏳ Pending Withdrawals</button>
+          <button class="tf-btn" onclick="bcSetSeg('norefs',this)">🚫 Zero Referrals</button>
+          <button class="tf-btn" onclick="bcSetSeg('toprefs',this)">🌟 Top Referrers</button>
+        </div>
+
+        <div id="bcSeg-all" class="bc-seg-panel">
+          <div style="font-size:11px;color:var(--muted)">ሁሉም ተጠቃሚዎች ይደርሳቸዋል — Server ከ Google Sheet ያነባቸዋል ✅</div>
+        </div>
+
+        <div id="bcSeg-birr" class="bc-seg-panel" style="display:none">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">Min Balance (ETB)</div><input class="cfg-inp" id="bc-birr-min" type="number" placeholder="e.g. 1000" style="width:140px" oninput="bcUpdateCount()"></div>
+            <div style="font-size:14px;color:var(--muted);align-self:flex-end;padding-bottom:8px">—</div>
+            <div><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">Max Balance (ETB)</div><input class="cfg-inp" id="bc-birr-max" type="number" placeholder="e.g. 5000" style="width:140px" oninput="bcUpdateCount()"></div>
           </div>
         </div>
 
-        <div class="cfg-row">
+        <div id="bcSeg-pending" class="bc-seg-panel" style="display:none">
+          <div style="font-size:11px;color:var(--muted)">ወደ ማውጣት ሂደት ውስጥ ያሉ ተጠቃሚዎች ብቻ (pending status)።</div>
+        </div>
+
+        <div id="bcSeg-norefs" class="bc-seg-panel" style="display:none">
+          <div style="font-size:11px;color:var(--muted)">ምንም ሪፈራል ያልጋበዙ ተጠቃሚዎች — ሊሳተፉ ያሉ።</div>
+        </div>
+
+        <div id="bcSeg-toprefs" class="bc-seg-panel" style="display:none">
+          <div><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">Min Referrals</div><input class="cfg-inp" id="bc-refs-min" type="number" placeholder="e.g. 5" style="width:130px" oninput="bcUpdateCount()"></div>
+        </div>
+
+        <!-- Recipient count badge -->
+        <div style="margin-top:13px;padding:10px 14px;background:var(--card2);border-radius:10px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:11px;color:var(--muted);font-weight:700">📊 Recipients</div>
+          <div id="bcRecipientCount" style="font-size:16px;font-weight:900;color:var(--gold);font-family:var(--mono)">—</div>
+        </div>
+      </div>
+
+      <!-- Message Composer -->
+      <div class="cfg-card" style="margin-bottom:12px">
+        <h3>✍️ Message Composer</h3>
+
+        <!-- Photo URL -->
+        <div class="cfg-row" style="margin-bottom:10px">
           <div><div class="cfg-key">Photo URL (አማራጭ)</div><div class="cfg-desc">Optional thumbnail image</div></div>
           <input class="cfg-inp" id="bc-photo" style="width:280px;font-size:10px" placeholder="https://i.postimg.cc/...jpg">
         </div>
 
-        <div style="margin-top:16px;margin-bottom:12px;">
-          <div class="cfg-key">Message Text (የማስታወቂያው ፅሁፍ)*</div>
-          <textarea class="cfg-inp" id="bc-text" style="width:100%;min-height:110px;resize:vertical;margin-top:5px;font-size:11px" placeholder="🎉 እንኳን ደህና መጡ! አዲስ ማስታወቂያ..."></textarea>
+        <!-- Toolbar -->
+        <div style="margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Formatting (Telegram Markdown)</div>
+            <div style="font-size:10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--green);border-radius:6px;padding:2px 8px;font-weight:700">{username} → ስም ይተካዋል ✅</div>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="fmt-btn" title="Bold" onclick="bcInsertFmt('**','**')"><b>B</b></button>
+            <button class="fmt-btn" title="Italic" onclick="bcInsertFmt('_','_')"><i>I</i></button>
+            <button class="fmt-btn" title="Underline" onclick="bcInsertFmt('<u>','</u>')"><u>U</u></button>
+            <button class="fmt-btn" title="Strikethrough" onclick="bcInsertFmt('~~','~~')"><s>S</s></button>
+            <button class="fmt-btn" title="Inline Code" onclick="bcInsertFmt('`','`')" style="font-family:var(--mono);font-size:10px">code</button>
+            <button class="fmt-btn" title="Code Block" onclick="bcInsertFmt('```\n','\n```')" style="font-family:var(--mono);font-size:9px">```</button>
+            <button class="fmt-btn" title="Spoiler" onclick="bcInsertFmt('||','||')">||</button>
+            <button class="fmt-btn" onclick="bcInsertText('🎉 ')">🎉</button>
+            <button class="fmt-btn" onclick="bcInsertText('🚀 ')">🚀</button>
+            <button class="fmt-btn" onclick="bcInsertText('💰 ')">💰</button>
+            <button class="fmt-btn" onclick="bcInsertText('⚡ ')">⚡</button>
+            <button class="fmt-btn" onclick="bcInsertText('✅ ')">✅</button>
+            <button class="fmt-btn" onclick="bcInsertText('🔥 ')">🔥</button>
+            <button class="fmt-btn" onclick="bcInsertText('{username}')">👤</button>
+          </div>
         </div>
 
-        <div class="cfg-row">
-          <div><div class="cfg-key">Button Text (አማራጭ)</div><div class="cfg-desc">Action button label</div></div>
-          <input class="cfg-inp" id="bc-btn-text" style="width:220px;font-size:11px" placeholder="🚀 አሁኑኑ ይጫወቱ">
+        <!-- Editor + Preview -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="bcComposerGrid">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">✏️ Edit</div>
+            <textarea class="cfg-inp" id="bc-text" style="width:100%;min-height:130px;resize:vertical;font-size:11px;line-height:1.6;text-align:left" placeholder="🎉 ሰላም {username}! አዲስ ማስታወቂያ…" oninput="bcUpdatePreview()"></textarea>
+            <div style="text-align:right;font-size:10px;color:var(--muted);margin-top:3px"><span id="bcCharCount">0</span> / 4096</div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">👁 Telegram Preview</div>
+            <div id="bcPreview" style="background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:11px;min-height:130px;font-size:12px;line-height:1.65;color:var(--text);word-break:break-word"></div>
+          </div>
         </div>
 
-        <div class="cfg-row">
-          <div><div class="cfg-key">Button URL (አማራጭ)</div><div class="cfg-desc">Action button link</div></div>
-          <input class="cfg-inp" id="bc-btn-url" style="width:280px;font-size:10px" placeholder="https://t.me/Swapmoney_bot/swapmoney">
+        <!-- Button fields -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">Button Text (አማራጭ)</div>
+            <input class="cfg-inp" id="bc-btn-text" style="width:100%;text-align:left;font-size:11px" placeholder="🚀 አሁኑኑ ይጫወቱ">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px">Button URL (አማራጭ)</div>
+            <input class="cfg-inp" id="bc-btn-url" style="width:100%;text-align:left;font-size:10px" placeholder="https://t.me/Swapmoney_bot/swapmoney">
+          </div>
         </div>
+      </div>
 
-        <div id="bcStatusBox" style="display:none"></div>
-        <button class="export-btn" style="font-size:12px;padding:11px 20px;margin-top:14px;width:100%" onclick="submitBroadcastAdmin()">🚀 Send Broadcast to All Users</button>
-
-        <div style="margin-top:10px;display:flex;gap:8px">
+      <!-- Send Controls -->
+      <div class="cfg-card">
+        <div id="bcStatusBox" style="display:none;margin-bottom:12px"></div>
+        <button class="export-btn" style="font-size:13px;padding:12px 20px;width:100%;justify-content:center" onclick="submitBroadcastAdmin()">
+          🚀 Send Broadcast — <span id="bcSendLabel">All Users</span>
+        </button>
+        <div style="margin-top:8px;display:flex;gap:7px">
           <button class="act-btn act-edit" style="flex:1;font-size:11px" onclick="pauseBroadcast()">⏸️ Pause</button>
           <button class="act-btn act-approve" style="flex:1;font-size:11px" onclick="resumeBroadcast()">▶️ Resume</button>
           <button class="act-btn act-reject" style="flex:1;font-size:11px" onclick="stopBroadcastServer()">⏹️ Stop</button>
         </div>
-
-        <!-- hidden legacy fields -->
-        <input id="bc-url" style="display:none">
-        <input id="bc-key" style="display:none">
       </div>
-    </div>
 
-  </div>
-</div>
+    </div><!-- /broadcast -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
 
 <script>
-/* ═══════════ CONFIG ═══════════ */
+/* ═══════════ CONFIG & STATE ═══════════ */
 var CFG={
-  url:   localStorage.getItem('adm_url')  || 'https://script.google.com/macros/s/AKfycbxDii62Bjz7KNxIFY9deeDDxnjNx1ifHu93GRxkhmpC9srZ_ZFSAtQgttQYh8o1pXmIgQ/exec',
-  int:   +localStorage.getItem('adm_int') || 30,
-  ps:    +localStorage.getItem('adm_ps')  || 50,
-  mwd:   +localStorage.getItem('adm_mwd') || 2500,
-  rb:    +localStorage.getItem('adm_rb')  || 50,
-  adminKey: localStorage.getItem('adm_key') || '',
+  url:  localStorage.getItem('adm_url')||'',
+  int:  +localStorage.getItem('adm_int')||30,
+  ps:   +localStorage.getItem('adm_ps')||50,
+  mwd:  +localStorage.getItem('adm_mwd')||2500,
+  rb:   +localStorage.getItem('adm_rb')||50,
+  adminKey: localStorage.getItem('adm_key')||''
 };
-
-/* ═══════════ STATE ═══════════ */
-var D={ users:[], withdrawals:[] };
-var hours=1, curView='overview', autoT;
-var uPage=1,wPage=1,rPage=1,nuPage=1;
-var fUsers=[],fWD=[],fRefs=[],fNewU=[];
-
-/* ═══════════ SORT STATE ═══════════ */
-var sortState = { view:'', colIdx: -1, asc: false };
-
-function toggleSort(viewType, colIdx) {
-  if (sortState.view === viewType && sortState.colIdx === colIdx) {
-    sortState.asc = !sortState.asc;
-  } else {
-    sortState.view = viewType;
-    sortState.colIdx = colIdx;
-    sortState.asc = false;
-  }
-  
-  document.querySelectorAll('.sort-icon').forEach(function(el){ el.textContent = ''; });
-  var iconEl = document.getElementById('s_' + viewType + '_' + colIdx);
-  if (iconEl) iconEl.textContent = sortState.asc ? '▲' : '▼';
-
-  var sortFn = function(a, b) {
-    var valA = a[colIdx] !== undefined ? a[colIdx] : a;
-    var valB = b[colIdx] !== undefined ? b[colIdx] : b;
-    
-    if (typeof valA === 'string') valA = valA.toLowerCase();
-    if (typeof valB === 'string') valB = valB.toLowerCase();
-
-    if (valA < valB) return sortState.asc ? -1 : 1;
-    if (valA > valB) return sortState.asc ? 1 : -1;
-    return 0;
-  };
-
-  if (viewType === 'users') fUsers.sort(sortFn);
-  else if (viewType === 'newusers') fNewU.sort(sortFn);
-  else if (viewType === 'withdrawals') fWD.sort(sortFn);
-  
-  renderView();
-}
-
-/* ═══════════ MOBILE SIDEBAR TOGGLE ═══════════ */
-function toggleMobileSidebar(open) {
-  var sb = document.getElementById('sidebar');
-  var ov = document.getElementById('sbOverlay');
-  if (open) {
-    sb.classList.add('open');
-    ov.classList.add('show');
-  } else {
-    sb.classList.remove('open');
-    ov.classList.remove('show');
-  }
-}
+var D={users:[],withdrawals:[]};
+var curView='overview',hours=1,autoT=null;
+var uPage=1,nuPage=1,rPage=1,wPage=1;
+var fUsers=[],fNewU=[],fRefs=[],fWD=[];
+var sortState={};
 
 /* ═══════════ TOAST ═══════════ */
-function toast(msg,type){
+function toast(msg,type,dur){
+  var w=document.getElementById('toastWrap');
   var el=document.createElement('div');
   el.className='toast-item '+(type||'info');
   el.textContent=msg;
-  document.getElementById('toastWrap').appendChild(el);
-  setTimeout(function(){el.remove();},3400);
+  w.appendChild(el);
+  setTimeout(function(){el.remove();},dur||3500);
 }
 
-/* ═══════════ NAV ═══════════ */
+/* ═══════════ SIDEBAR ═══════════ */
+function toggleMobileSidebar(open){
+  document.getElementById('sidebar').classList.toggle('open',open);
+  document.getElementById('sbOverlay').classList.toggle('show',open);
+}
+
+/* ═══════════ NAVIGATION ═══════════ */
 var PAGE_TITLES={overview:'Dashboard Overview',users:'All Users',newusers:'New Registrations',
-  referrals:'Referral Tree',withdrawals:'Withdrawals',swapcoin:'Swap Coins',analytics:'Analytics',config:'Configuration'};
+  referrals:'Referral Tree',withdrawals:'Withdrawals',swapcoin:'Swap Coins',
+  analytics:'Analytics',config:'Configuration',broadcast:'Broadcast'};
+
 function nav(id,btn){
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
-  document.querySelectorAll('.sb-btn').forEach(function(b){b.classList.remove('active');});
   document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.sb-btn').forEach(function(b){b.classList.remove('active');});
   if(btn)btn.classList.add('active');
   curView=id;
   document.getElementById('pageTitle').textContent=PAGE_TITLES[id]||id;
   toggleMobileSidebar(false);
+  if(id==='broadcast')bcUpdateCount();
   renderView();
 }
 
@@ -784,16 +805,27 @@ function filterByTime(rows,dateIdx){
   return rows.filter(function(r){var d=new Date(r[dateIdx]);return !isNaN(d)&&d>=cut;});
 }
 
-/* ═══════════ LOAD DATA ═══════════ */
-function showLoad(msg){document.getElementById('loadingTxt').textContent=msg||'Loading…';document.getElementById('loading').classList.add('show');}
-function hideLoad(){document.getElementById('loading').classList.remove('show');}
+/* ═══════════ V3 LOAD DATA — slim sync bar, no blur ═══════════ */
+function showLoad(msg){
+  document.getElementById('syncBar').classList.add('show');
+  var pill=document.getElementById('syncPill');
+  var txt=document.getElementById('syncPillTxt');
+  if(pill)pill.classList.add('show');
+  if(txt)txt.textContent=msg||'Syncing…';
+}
+function hideLoad(){
+  document.getElementById('syncBar').classList.remove('show');
+  var pill=document.getElementById('syncPill');
+  if(pill)pill.classList.remove('show');
+}
+
 async function loadAll(){
-  showLoad('Loading data from Google Sheets…');
+  showLoad('Syncing…');
   try{
     var r1=await fetch(CFG.url+'?action=getAll');
-    if(!r1.ok) throw new Error('HTTP '+r1.status+' from Apps Script');
+    if(!r1.ok)throw new Error('HTTP '+r1.status+' from Apps Script');
     var j1=await r1.json();
-    if(j1.result==='error') throw new Error(j1.message||'Server error');
+    if(j1.result==='error')throw new Error(j1.message||'Server error');
     if(j1.users)D.users=j1.users;
 
     var r2=await fetch(CFG.url+'?action=getWithdrawals');
@@ -803,14 +835,12 @@ async function loadAll(){
     document.getElementById('lastSync').textContent='Synced: '+new Date().toLocaleTimeString();
     updateBadges();
     renderView();
+    if(curView==='broadcast')bcUpdateCount();
 
-    if(D.users.length===0){
-      toast('⚠️ Connected, but 0 users found','error');
-    } else {
-      toast('✅ '+D.users.length+' users loaded','success');
-    }
+    toast(D.users.length===0?'⚠️ 0 users found':'✅ '+D.users.length+' users loaded',
+          D.users.length===0?'error':'success');
   }catch(err){
-    console.error('[Swap Money Admin] loadAll failed:', err);
+    console.error('[SwapMoney]',err);
     toast('❌ '+err.message,'error');
   }
   hideLoad();
@@ -826,8 +856,8 @@ function updateBadges(){
 
 /* ═══════════ RENDER DISPATCH ═══════════ */
 function renderView(){
-  if(curView==='overview')    renderOverview();
-  else if(curView==='users')  renderUsers();
+  if(curView==='overview')renderOverview();
+  else if(curView==='users')renderUsers();
   else if(curView==='newusers')renderNewUsers();
   else if(curView==='referrals')renderReferrals();
   else if(curView==='withdrawals')renderWithdrawals();
@@ -835,19 +865,16 @@ function renderView(){
   else if(curView==='analytics')renderAnalytics();
 }
 
-/* ═══════════ OPEN USER BY ID DIRECTLY ═══════════ */
-function openUserById(id) {
-  var u = D.users.find(function(x) { return String(x.userId) === String(id); });
-  if (u) {
-    openUser([u.userId, u.username, u.balance, u.totalAds, u.joinedDate, u.referredBy, u.totalReferrals, u.swapCoins]);
-  } else {
-    toast('User ID ' + id + ' not found', 'error');
-  }
+/* ═══════════ OPEN USER BY ID ═══════════ */
+function openUserById(id){
+  var u=D.users.find(function(x){return String(x.userId)===String(id);});
+  if(u)openUser([u.userId,u.username,u.balance,u.totalAds,u.joinedDate,u.referredBy,u.totalReferrals,u.swapCoins]);
+  else toast('User ID '+id+' not found','error');
 }
 
 /* ═══════════ OVERVIEW ═══════════ */
 function renderOverview(){
-  var u=D.users, w=D.withdrawals;
+  var u=D.users,w=D.withdrawals;
   var fu=filterByTime(u.map(function(x){return[x.userId,x.username,x.balance,x.totalAds,x.joinedDate,x.referredBy,x.totalReferrals,x.swapCoins];}),4);
   var fw=filterByTime(w.map(function(x){return[x.date,x.userId,x.method,x.account,x.amount,x.status];}),0);
   var totBal=u.reduce(function(s,x){return s+Number(x.balance||0);},0);
@@ -857,7 +884,6 @@ function renderOverview(){
   var totAds=u.reduce(function(s,x){return s+Number(x.totalAds||0);},0);
   var totRefs=u.reduce(function(s,x){return s+Number(x.totalReferrals||0);},0);
   var totWD=w.reduce(function(s,x){return s+Number(x.amount||0);},0);
-
   st('ov-users',u.length.toLocaleString());
   st('ov-newu','↑ '+fu.length+' in period');
   st('ov-bal',totBal.toLocaleString()+' ETB');
@@ -868,19 +894,16 @@ function renderOverview(){
   st('sumNew',fu.length);st('sumAds',totAds.toLocaleString());
   st('sumRefs',totRefs.toLocaleString());st('sumWD',totWD.toLocaleString()+' ETB');
   st('sumAvg',(u.length?Math.round(totBal/u.length):0)+' ETB');st('sumSC',totSC.toLocaleString()+' SC');
-
   var newReg=[...fu].sort(function(a,b){return new Date(b[4])-new Date(a[4]);}).slice(0,8);
   st('newRegLabel',fu.length+' users');
   document.getElementById('newRegBody').innerHTML=newReg.map(function(r){
     return'<tr><td class="td-id" onclick="openUserById(\''+r[0]+'\')">'+r[0]+'</td><td class="td-name" onclick="openUserById(\''+r[0]+'\')">'+(r[1]||'—')+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-id" onclick="openUserById(\''+r[5]+'\')">'+(r[5]||'—')+'</td></tr>';
   }).join('');
-
   var top8=[...u].sort(function(a,b){return b.balance-a.balance;}).slice(0,8);
   var maxB=top8[0]?top8[0].balance:1;
   document.getElementById('topChart').innerHTML=top8.map(function(x){
     return'<div class="bc-row" onclick="openUserById(\''+x.userId+'\')"><div class="bc-label">'+(x.username||x.userId)+'</div><div class="bc-bg"><div class="bc-fill" style="width:'+((x.balance/maxB*100).toFixed(1))+'%"></div></div><div class="bc-val">'+Number(x.balance).toLocaleString()+' ETB</div></div>';
   }).join('');
-
   var rwds=[...fw].sort(function(a,b){return new Date(b[0])-new Date(a[0]);}).slice(0,6);
   st('recentWDLabel',fw.length+' total');
   document.getElementById('recentWDBody').innerHTML=rwds.map(function(r){
@@ -893,6 +916,7 @@ function renderUsers(){
   var tf=filterByTime(D.users.map(function(u){return[u.userId,u.username,u.balance,u.totalAds,u.joinedDate,u.referredBy,u.totalReferrals,u.swapCoins];}),4);
   var q=(document.getElementById('userSearch')||{}).value||'';
   fUsers=tf.filter(function(r){return !q||String(r[0]).includes(q)||String(r[1]).toLowerCase().includes(q.toLowerCase());});
+  applySort('users',fUsers);
   paginate('usersBody','usersPagInfo','usersPag',fUsers,uPage,function(p){uPage=p;renderUsers();},function(r){
     return'<tr><td class="td-id" onclick="openUserById(\''+r[0]+'\')">'+r[0]+'</td><td class="td-name" onclick="openUserById(\''+r[0]+'\')">'+(r[1]||'—')+'</td><td class="td-bal">'+Number(r[2]).toLocaleString()+'</td><td class="td-sc">'+Number(r[7]).toLocaleString()+'</td><td class="td-ads">'+(r[3]||0)+'</td><td class="td-refs">'+(r[6]||0)+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-id" onclick="openUserById(\''+r[5]+'\')">'+(r[5]||'—')+'</td><td style="display:flex;gap:4px"><button class="act-btn act-edit" onclick=\'openUser('+JSON.stringify(r)+')\'>View</button><button class="act-btn act-approve" onclick=\'openBal("'+r[0]+'",'+r[2]+')\'>Edit</button></td></tr>';
   });
@@ -903,6 +927,7 @@ function filterUsers(q){uPage=1;renderUsers();}
 function renderNewUsers(){
   fNewU=[...filterByTime(D.users.map(function(u){return[u.userId,u.username,u.balance,u.totalAds,u.joinedDate,u.referredBy];}),4)].sort(function(a,b){return new Date(b[4])-new Date(a[4]);});
   document.getElementById('newBadge').textContent=fNewU.length;
+  applySort('newusers',fNewU);
   paginate('newUsersBody','newUsersPagInfo','newUsersPag',fNewU,nuPage,function(p){nuPage=p;renderNewUsers();},function(r){
     return'<tr><td class="td-id" onclick="openUserById(\''+r[0]+'\')">'+r[0]+'</td><td class="td-name" onclick="openUserById(\''+r[0]+'\')">'+(r[1]||'—')+'</td><td class="td-bal">'+Number(r[2]).toLocaleString()+'</td><td class="td-date">'+fd(r[4])+'</td><td class="td-id" onclick="openUserById(\''+r[5]+'\')">'+(r[5]||'—')+'</td></tr>';
   });
@@ -943,6 +968,7 @@ function renderWithdrawals(){
   var tf=filterByTime(D.withdrawals.map(function(w){return[w.date,w.userId,w.method,w.account,w.amount,w.status];}),0);
   var sq=(document.getElementById('wdFilter')||{}).value||'';
   fWD=tf.filter(function(r){return !sq||sc(r[5])===sq;});
+  applySort('withdrawals',fWD);
   var tot=fWD.reduce(function(s,r){return s+Number(r[4]||0);},0);
   var pend=fWD.filter(function(r){return sc(r[5])==='pending';});
   var paid=fWD.filter(function(r){return sc(r[5])==='paid';});
@@ -956,7 +982,7 @@ function renderWithdrawals(){
 }
 function filterWD(){wPage=1;renderWithdrawals();}
 async function markWD(userId,amount,action){
-  if(!CFG.adminKey){toast('⚠️ Admin Key not set — go to Configuration first','error');return;}
+  if(!CFG.adminKey){toast('⚠️ Admin Key not set','error');return;}
   try{
     await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'updateWDStatus',userId:userId,amount:amount,newStatus:action,adminKey:CFG.adminKey})});
@@ -966,7 +992,7 @@ async function markWD(userId,amount,action){
   }catch(e){toast('Update failed','error');}
 }
 
-/* ═══════════ SWAP COINS (FIXED EDIT SC BUTTON) ═══════════ */
+/* ═══════════ SWAP COINS ═══════════ */
 function renderSC(){
   var sorted=[...D.users].sort(function(a,b){return b.swapCoins-a.swapCoins;}).filter(function(u){return u.swapCoins>0;});
   var tot=D.users.reduce(function(s,u){return s+Number(u.swapCoins||0);},0);
@@ -982,11 +1008,10 @@ function renderSC(){
 function renderAnalytics(){
   var u=D.users;
   var totAds=u.reduce(function(s,x){return s+Number(x.totalAds||0);},0);
-  var hibal=u.filter(function(x){return x.balance>=2500;}).length;
-  var lobal=u.filter(function(x){return x.balance<=50;}).length;
   st('an-ads',totAds.toLocaleString());
   st('an-avg',u.length?(totAds/u.length).toFixed(1):'0');
-  st('an-hi',hibal);st('an-lo',lobal);
+  st('an-hi',u.filter(function(x){return x.balance>=2500;}).length);
+  st('an-lo',u.filter(function(x){return x.balance<=50;}).length);
   var top20=[...u].sort(function(a,b){return b.balance-a.balance;}).slice(0,20);
   var mx=top20[0]?top20[0].balance:1;
   document.getElementById('an-chart').innerHTML=top20.map(function(x){
@@ -998,7 +1023,32 @@ function renderAnalytics(){
   }).join('');
 }
 
-/* ═══════════ USER MODAL & EDIT ACTIONS ═══════════ */
+/* ═══════════ SORT ═══════════ */
+function toggleSort(tbl,col){
+  var key=tbl+'_'+col;
+  sortState[key]=sortState[key]==='asc'?'desc':'asc';
+  document.querySelectorAll('[id^="s_'+tbl+'_"]').forEach(function(el){el.textContent='';});
+  var el=document.getElementById('s_'+tbl+'_'+col);
+  if(el)el.textContent=sortState[key]==='asc'?'▲':'▼';
+  if(tbl==='users'){uPage=1;renderUsers();}
+  else if(tbl==='newusers'){nuPage=1;renderNewUsers();}
+  else if(tbl==='withdrawals'){wPage=1;renderWithdrawals();}
+}
+function applySort(tbl,arr){
+  var entry=Object.entries(sortState).find(function(e){return e[0].startsWith(tbl+'_');});
+  if(!entry)return;
+  var col=+entry[0].split('_').pop();
+  var dir=entry[1];
+  arr.sort(function(a,b){
+    var av=isNaN(a[col])?String(a[col]||''):Number(a[col]);
+    var bv=isNaN(b[col])?String(b[col]||''):Number(b[col]);
+    if(av<bv)return dir==='asc'?-1:1;
+    if(av>bv)return dir==='asc'?1:-1;
+    return 0;
+  });
+}
+
+/* ═══════════ USER MODAL & EDIT ═══════════ */
 function openUser(row){
   var refs=D.users.filter(function(u){return u.referredBy===row[0];});
   document.getElementById('userModalBody').innerHTML=
@@ -1023,83 +1073,79 @@ function openUser(row){
       '<button class="m-btn secondary" style="color:var(--green);border-color:var(--green)" onclick="openRefModal(\''+row[0]+'\','+row[6]+')">👥 Edit Refs</button>'+
       '<button class="m-btn danger" onclick="confirmDeleteUser(\''+row[0]+'\')">🗑️ Delete</button>'+
     '</div>'+
-    '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:7px">Referred Users ('+refs.length+')</div>'+
-    '<div style="max-height:120px;overflow-y:auto">'+refs.slice(0,8).map(function(r){
-      return'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border2);font-size:11px;cursor:pointer" onclick="openUserById(\''+r.userId+'\')"><span>'+(r.username||r.userId)+'</span><span style="color:var(--muted)">'+fd(r.joinedDate)+'</span></div>';
-    }).join('')+'</div>';
+    (refs.length?'<div class="sum-box"><h4>👥 Referred People ('+refs.length+')</h4>'+refs.slice(0,5).map(function(r){return'<div class="sum-row"><span class="sum-key" onclick="openUserById(\''+r.userId+'\')" style="cursor:pointer;color:var(--blue)">'+(r.username||r.userId)+'</span><span class="sum-val" style="color:var(--gold)">'+Number(r.balance).toLocaleString()+' ETB</span></div>';}).join('')+'</div>':'');
   document.getElementById('userModal').classList.add('show');
 }
-
 function openBal(id,cur){
   document.getElementById('adjId').value=id;
   document.getElementById('adjCur').value=Number(cur).toLocaleString()+' ETB';
-  document.getElementById('adjNew').value=cur;
+  document.getElementById('adjNew').value='';
   document.getElementById('balModal').classList.add('show');
 }
 async function submitBalAdj(){
   var id=document.getElementById('adjId').value;
-  var nb=parseFloat(document.getElementById('adjNew').value);
-  if(isNaN(nb)){toast('Valid amount ያስገቡ','error');return;}
-  if(!CFG.adminKey){toast('⚠️ Admin Key not set — go to Configuration first','error');return;}
+  var nv=document.getElementById('adjNew').value;
+  if(!nv){toast('New balance ያስገቡ','error');return;}
+  if(!CFG.adminKey){toast('Admin Key not set','error');return;}
   showLoad('Updating balance…');
   try{
     await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'adminSetBalance',userId:id,balance:nb,adminKey:CFG.adminKey})});
+      body:JSON.stringify({action:'adminSetBalance',userId:id,newBalance:+nv,adminKey:CFG.adminKey})});
     var u=D.users.find(function(x){return x.userId===id;});
-    if(u)u.balance=nb;
-    closeModal('balModal');closeModal('userModal');toast('✅ Balance updated to '+nb+' ETB','success');renderView();
+    if(u)u.balance=+nv;
+    closeModal('balModal');closeModal('userModal');
+    toast('✅ Balance updated to '+nv,'success');renderView();
   }catch(e){toast('Failed to update balance','error');}
   hideLoad();
 }
-
 function openSCModal(id,cur){
   document.getElementById('scAdjId').value=id;
   document.getElementById('scAdjCur').value=Number(cur).toLocaleString()+' SC';
-  document.getElementById('scAdjNew').value=cur;
+  document.getElementById('scAdjNew').value='';
   document.getElementById('scModal').classList.add('show');
 }
 async function submitSCAdj(){
   var id=document.getElementById('scAdjId').value;
-  var ns=parseFloat(document.getElementById('scAdjNew').value);
-  if(isNaN(ns)){toast('Valid SC amount ያስገቡ','error');return;}
-  if(!CFG.adminKey){toast('⚠️ Admin Key not set — go to Configuration first','error');return;}
-  showLoad('Updating Swap Coins…');
+  var nv=document.getElementById('scAdjNew').value;
+  if(!nv){toast('New SC ያስገቡ','error');return;}
+  if(!CFG.adminKey){toast('Admin Key not set','error');return;}
+  showLoad('Updating SC…');
   try{
     await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'adminSetSC',userId:id,swapCoins:ns,adminKey:CFG.adminKey})});
+      body:JSON.stringify({action:'adminSetSC',userId:id,newSC:+nv,adminKey:CFG.adminKey})});
     var u=D.users.find(function(x){return x.userId===id;});
-    if(u)u.swapCoins=ns;
-    closeModal('scModal');closeModal('userModal');toast('✅ SC updated to '+ns,'success');renderView();
+    if(u)u.swapCoins=+nv;
+    closeModal('scModal');closeModal('userModal');
+    toast('✅ SC updated to '+nv,'success');renderView();
   }catch(e){toast('Failed to update SC','error');}
   hideLoad();
 }
-
 function openRefModal(id,cur){
   document.getElementById('refAdjId').value=id;
-  document.getElementById('refAdjCur').value=Number(cur).toLocaleString()+' Refs';
-  document.getElementById('refAdjNew').value=cur;
+  document.getElementById('refAdjCur').value=Number(cur).toLocaleString()+' referrals';
+  document.getElementById('refAdjNew').value='';
   document.getElementById('refModal').classList.add('show');
 }
 async function submitRefAdj(){
   var id=document.getElementById('refAdjId').value;
-  var nr=parseInt(document.getElementById('refAdjNew').value);
-  if(isNaN(nr)){toast('Valid Referral count ያስገቡ','error');return;}
-  if(!CFG.adminKey){toast('⚠️ Admin Key not set — go to Configuration first','error');return;}
-  showLoad('Updating Referrals…');
+  var nv=document.getElementById('refAdjNew').value;
+  if(!nv){toast('New referrals count ያስገቡ','error');return;}
+  if(!CFG.adminKey){toast('Admin Key not set','error');return;}
+  showLoad('Updating referrals…');
   try{
     await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'adminSetRefs',userId:id,referrals:nr,adminKey:CFG.adminKey})});
+      body:JSON.stringify({action:'adminSetReferrals',userId:id,newReferrals:+nv,adminKey:CFG.adminKey})});
     var u=D.users.find(function(x){return x.userId===id;});
-    if(u)u.totalReferrals=nr;
-    closeModal('refModal');closeModal('userModal');toast('✅ Referrals updated to '+nr,'success');renderView();
+    if(u)u.totalReferrals=+nv;
+    closeModal('refModal');closeModal('userModal');
+    toast('✅ Referrals updated to '+nv,'success');renderView();
   }catch(e){toast('Failed to update Referrals','error');}
   hideLoad();
 }
-
 async function confirmDeleteUser(id){
-  if(!confirm('እርግጠኛ ነዎት ይህ ተጠቃሚ ይሰረዝ? (ID: '+id+')')) return;
-  if(!CFG.adminKey){toast('⚠️ Admin Key not set — go to Configuration first','error');return;}
-  showLoad('Deleting user…');
+  if(!confirm('እርግጠኛ ነዎት ይህ ተጠቃሚ ይሰረዝ? (ID: '+id+')'))return;
+  if(!CFG.adminKey){toast('Admin Key not set','error');return;}
+  showLoad('Deleting…');
   try{
     await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'adminDeleteUser',userId:id,adminKey:CFG.adminKey})});
@@ -1108,7 +1154,6 @@ async function confirmDeleteUser(id){
   }catch(e){toast('Failed to delete user','error');}
   hideLoad();
 }
-
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 
 /* ═══════════ PAGINATION ═══════════ */
@@ -1158,15 +1203,11 @@ function saveConfig(){
   CFG.mwd=+document.getElementById('cfg-mwd').value||2500;
   CFG.rb=+document.getElementById('cfg-rb').value||50;
   CFG.adminKey=document.getElementById('cfg-key').value||'';
-  localStorage.setItem('adm_url', CFG.url);
-  localStorage.setItem('adm_int', CFG.int);
-  localStorage.setItem('adm_ps',  CFG.ps);
-  localStorage.setItem('adm_mwd', CFG.mwd);
-  localStorage.setItem('adm_rb',  CFG.rb);
-  localStorage.setItem('adm_key', CFG.adminKey);
+  localStorage.setItem('adm_url',CFG.url);localStorage.setItem('adm_int',CFG.int);
+  localStorage.setItem('adm_ps',CFG.ps);localStorage.setItem('adm_mwd',CFG.mwd);
+  localStorage.setItem('adm_rb',CFG.rb);localStorage.setItem('adm_key',CFG.adminKey);
   document.getElementById('syncIntervalLabel').textContent=CFG.int;
-  resetAuto();
-  toast('✅ Config saved','success');
+  resetAuto();toast('✅ Config saved','success');
 }
 function loadConfig(){
   document.getElementById('cfg-url').value=CFG.url;
@@ -1176,15 +1217,16 @@ function loadConfig(){
   document.getElementById('cfg-rb').value=CFG.rb;
   document.getElementById('cfg-key').value=CFG.adminKey||'';
   document.getElementById('syncIntervalLabel').textContent=CFG.int;
-  document.getElementById('bc-railway-url').value=localStorage.getItem('railway_url')||'';
-  document.getElementById('bc-admin-key').value=localStorage.getItem('admin_key')||'SWAP_ADMIN_2026';
+  var ru=localStorage.getItem('railway_url')||'';
+  var rk=localStorage.getItem('admin_key')||'SWAP_ADMIN_2026';
+  document.getElementById('bc-railway-url').value=ru;
+  document.getElementById('bc-admin-key').value=rk;
+  RAILWAY_URL=ru;ADMIN_KEY=rk;
 }
 function clearCachedConfig(){
-  ['adm_url','adm_int','adm_ps','adm_mwd','adm_rb','adm_key'].forEach(function(k){
-    localStorage.removeItem(k);
-  });
+  ['adm_url','adm_int','adm_ps','adm_mwd','adm_rb','adm_key'].forEach(function(k){localStorage.removeItem(k);});
   toast('🗑️ Cache cleared — reloading…','success');
-  setTimeout(function(){ location.reload(); }, 600);
+  setTimeout(function(){location.reload();},600);
 }
 function resetAuto(){clearInterval(autoT);autoT=setInterval(loadAll,CFG.int*1000);}
 
@@ -1203,138 +1245,172 @@ function sc(s){
   return'pending';
 }
 
-/* ═══════════ BROADCAST (Railway Server Mode) ═══════════ */
+/* ═══════════ BROADCAST ═══════════ */
+var RAILWAY_URL=localStorage.getItem('railway_url')||'';
+var ADMIN_KEY=localStorage.getItem('admin_key')||'SWAP_ADMIN_2026';
+var bcPollTimer=null;
+var bcCurrentSeg='all';
 
-// Set this to your Railway server URL after deploy
-var RAILWAY_URL = localStorage.getItem('railway_url') || '';
-var ADMIN_KEY   = localStorage.getItem('admin_key')   || 'SWAP_ADMIN_2026';
+function bcSetSeg(seg,btn){
+  bcCurrentSeg=seg;
+  document.querySelectorAll('#bcSegTabs .tf-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.bc-seg-panel').forEach(function(p){p.style.display='none';});
+  var panel=document.getElementById('bcSeg-'+seg);
+  if(panel)panel.style.display='block';
+  bcUpdateCount();
+}
 
-var bcPollTimer = null;
-
-async function submitBroadcastAdmin() {
-  var text    = document.getElementById('bc-text').value.trim();
-  var photo   = document.getElementById('bc-photo').value.trim();
-  var btnText = document.getElementById('bc-btn-text').value.trim();
-  var btnUrl  = document.getElementById('bc-btn-url').value.trim();
-  var railUrl = document.getElementById('bc-railway-url').value.trim();
-  var adminKey= document.getElementById('bc-admin-key').value.trim();
-
-  if (!text)    { toast('የማስታወቂያ ፅሁፍ ያስገቡ', 'error'); return; }
-  if (!railUrl) { toast('Railway Server URL ያስገቡ', 'error'); return; }
-
-  if (!confirm('እርግጠኛ ነዎት ይህ መልእክት በቴሌግራም ለሁሉም ተጠቃሚዎች ይላክ?')) return;
-
-  // Save to localStorage
-  localStorage.setItem('railway_url', railUrl);
-  localStorage.setItem('admin_key',   adminKey);
-  RAILWAY_URL = railUrl;
-  ADMIN_KEY   = adminKey;
-
-  var statusBox = document.getElementById('bcStatusBox');
-  statusBox.className = 'sum-box';
-  statusBox.style.display = 'block';
-  statusBox.innerHTML = '<div style="color:var(--gold);font-size:13px;font-weight:800">⏳ Starting broadcast on server…</div>';
-
-  // Prepare payload
-  var payload = { text: text };
-  if (photo && photo.startsWith('http'))  payload.photo   = photo;
-  if (btnText && btnUrl && btnUrl.startsWith('http')) {
-    payload.btnText = btnText;
-    payload.btnUrl  = btnUrl;
+function bcGetRecipients(){
+  if(!D||!D.users)return[];
+  var seg=bcCurrentSeg;
+  if(seg==='all')return D.users;
+  if(seg==='birr'){
+    var mn=parseFloat(document.getElementById('bc-birr-min').value)||0;
+    var mx=parseFloat(document.getElementById('bc-birr-max').value)||Infinity;
+    return D.users.filter(function(u){var b=Number(u.balance||0);return b>=mn&&b<=mx;});
   }
+  if(seg==='pending'){
+    var pids={};
+    (D.withdrawals||[]).forEach(function(w){if(w.status&&w.status.indexOf('ጥበቃ')>-1)pids[w.userId]=true;});
+    return D.users.filter(function(u){return pids[u.userId];});
+  }
+  if(seg==='norefs')return D.users.filter(function(u){return!u.totalReferrals||Number(u.totalReferrals)===0;});
+  if(seg==='toprefs'){
+    var mr=parseFloat(document.getElementById('bc-refs-min').value)||1;
+    return D.users.filter(function(u){return Number(u.totalReferrals||0)>=mr;});
+  }
+  return D.users;
+}
 
-  try {
-    var res = await fetch(railUrl + '/broadcast/start', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
-      body:    JSON.stringify(payload)
+function bcUpdateCount(){
+  var list=bcGetRecipients();
+  var el=document.getElementById('bcRecipientCount');
+  if(el)el.textContent=list.length.toLocaleString()+' users';
+  var lbl=document.getElementById('bcSendLabel');
+  if(lbl){
+    var names={all:'All Users',birr:'By Birr Range',pending:'Pending Withdrawals',norefs:'Zero Referrals',toprefs:'Top Referrers'};
+    lbl.textContent=(names[bcCurrentSeg]||'')+' ('+list.length.toLocaleString()+')';
+  }
+}
+
+function bcMarkdownToHtml(text){
+  if(!text)return'';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```([\s\S]*?)```/g,'<code style="display:block;background:rgba(255,255,255,.07);padding:6px 8px;border-radius:6px;font-family:var(--mono);font-size:10px;white-space:pre-wrap">$1</code>')
+    .replace(/`([^`]+)`/g,'<code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:10px">$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+    .replace(/_([^_]+)_/g,'<i>$1</i>')
+    .replace(/~~([^~]+)~~/g,'<s>$1</s>')
+    .replace(/\|\|([^|]+)\|\|/g,'<span style="background:rgba(255,255,255,.12);color:transparent;border-radius:3px;cursor:pointer" title="Spoiler">$1</span>')
+    .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g,'<u>$1</u>')
+    .replace(/\{username\}/g,'<b style="color:var(--gold)">@ስምህ</b>')
+    .replace(/\n/g,'<br>');
+}
+
+function bcUpdatePreview(){
+  var text=document.getElementById('bc-text').value;
+  var prev=document.getElementById('bcPreview');
+  var cnt=document.getElementById('bcCharCount');
+  if(prev)prev.innerHTML=bcMarkdownToHtml(text)||'<span style="color:var(--dim);font-size:11px">Preview will appear here…</span>';
+  if(cnt)cnt.textContent=text.length;
+}
+
+function bcInsertFmt(before,after){
+  var ta=document.getElementById('bc-text');
+  var s=ta.selectionStart,e=ta.selectionEnd;
+  var sel=ta.value.substring(s,e);
+  var rep=before+(sel||'text')+after;
+  ta.value=ta.value.substring(0,s)+rep+ta.value.substring(e);
+  ta.selectionStart=s+before.length;
+  ta.selectionEnd=s+before.length+(sel||'text').length;
+  ta.focus();bcUpdatePreview();
+}
+function bcInsertText(str){
+  var ta=document.getElementById('bc-text');
+  var s=ta.selectionStart;
+  ta.value=ta.value.substring(0,s)+str+ta.value.substring(s);
+  ta.selectionStart=ta.selectionEnd=s+str.length;
+  ta.focus();bcUpdatePreview();
+}
+
+async function submitBroadcastAdmin(){
+  var text=document.getElementById('bc-text').value.trim();
+  var photo=document.getElementById('bc-photo').value.trim();
+  var btnText=document.getElementById('bc-btn-text').value.trim();
+  var btnUrl=document.getElementById('bc-btn-url').value.trim();
+  var railUrl=document.getElementById('bc-railway-url').value.trim();
+  var adminKey=document.getElementById('bc-admin-key').value.trim();
+  if(!text){toast('የማስታወቂያ ፅሁፍ ያስገቡ','error');return;}
+  if(!railUrl){toast('Railway Server URL ያስገቡ','error');return;}
+  var recipients=bcGetRecipients();
+  if(recipients.length===0){toast('ምንም recipient አልተገኘም — segment ቅናሾን ይፈትሹ','error');return;}
+  var segNames={all:'All Users',birr:'By Birr Range',pending:'Pending Withdrawals',norefs:'Zero Referrals',toprefs:'Top Referrers'};
+  if(!confirm('እርግጠኛ ነዎት?\n\nSegment: '+(segNames[bcCurrentSeg]||'')+'\nRecipients: '+recipients.length+' users\n\nBrowser ቢዘጋ Railway Server ብቻውን ያጠናቅቃል ✅'))return;
+  localStorage.setItem('railway_url',railUrl);localStorage.setItem('admin_key',adminKey);
+  RAILWAY_URL=railUrl;ADMIN_KEY=adminKey;
+  var statusBox=document.getElementById('bcStatusBox');
+  statusBox.className='sum-box';statusBox.style.display='block';
+  statusBox.innerHTML='<div style="color:var(--gold);font-size:13px;font-weight:800">⏳ Starting broadcast — '+recipients.length+' users…</div>';
+  // Build payload — full {userId, username} for personalisation
+  var payload={text:text};
+  if(bcCurrentSeg!=='all'){
+    payload.users=recipients.map(function(u){return{userId:u.userId,username:u.username||''};});
+  }
+  if(photo&&photo.startsWith('http'))payload.photo=photo;
+  if(btnText&&btnUrl&&btnUrl.startsWith('http')){payload.btnText=btnText;payload.btnUrl=btnUrl;}
+  try{
+    var res=await fetch(railUrl+'/broadcast/start',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Key':adminKey},
+      body:JSON.stringify(payload)
     });
-    var data = await res.json();
-
-    if (!res.ok) {
-      toast('❌ ' + (data.error || 'Server error'), 'error');
-      statusBox.style.display = 'none';
-      return;
-    }
-
-    toast('🚀 Broadcast started! ' + data.total + ' users — Browser ቢዘጋ server ብቻውን ያጠናቅቃል ✅', 'success');
+    var data=await res.json();
+    if(!res.ok){toast('❌ '+(data.error||'Server error'),'error');statusBox.style.display='none';return;}
+    toast('🚀 Broadcast started! '+data.total+' users — Browser ቢዘጋ server ብቻውን ያጠናቅቃል ✅','success');
     startPolling();
-
-  } catch (e) {
-    toast('❌ Cannot reach Railway server: ' + e.message, 'error');
-    statusBox.style.display = 'none';
-  }
+  }catch(e){toast('❌ Cannot reach Railway server: '+e.message,'error');statusBox.style.display='none';}
 }
 
-// ═══ POLL STATUS every 3 seconds ═══
-function startPolling() {
-  if (bcPollTimer) clearInterval(bcPollTimer);
-  bcPollTimer = setInterval(pollStatus, 3000);
-  pollStatus(); // immediate first call
+function startPolling(){
+  if(bcPollTimer)clearInterval(bcPollTimer);
+  bcPollTimer=setInterval(pollStatus,3000);
+  pollStatus();
 }
-
-async function pollStatus() {
-  if (!RAILWAY_URL) return;
-  try {
-    var res  = await fetch(RAILWAY_URL + '/broadcast/status', { headers: { 'X-Admin-Key': ADMIN_KEY } });
-    var data = await res.json();
+async function pollStatus(){
+  if(!RAILWAY_URL)return;
+  try{
+    var res=await fetch(RAILWAY_URL+'/broadcast/status',{headers:{'X-Admin-Key':ADMIN_KEY}});
+    var data=await res.json();
     renderBroadcastStatus(data);
-    if (!data.running) {
-      clearInterval(bcPollTimer);
-      bcPollTimer = null;
-    }
-  } catch (e) {}
+    if(!data.running){clearInterval(bcPollTimer);bcPollTimer=null;}
+  }catch(e){}
 }
-
-function renderBroadcastStatus(d) {
-  var statusBox = document.getElementById('bcStatusBox');
-  if (!statusBox) return;
-  statusBox.style.display = 'block';
-
-  if (!d.running && d.total === 0) {
-    statusBox.style.display = 'none';
-    return;
-  }
-
-  var pauseBtn = d.paused
-    ? '<button class="act-btn act-approve" onclick="resumeBroadcast()">▶️ Resume</button>'
-    : '<button class="act-btn act-edit"    onclick="pauseBroadcast()">⏸️ Pause</button>';
-
-  var statusLabel = d.paused
-    ? '<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:6px">⏸️ Broadcast Paused</div>'
-    : d.running
-      ? '<div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:6px">🚀 Live on Server: ' + d.pct + '%</div>'
-      : '<div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:6px">✅ Broadcast Complete</div>';
-
-  statusBox.innerHTML =
-    statusLabel +
-    '<div style="font-size:11px;color:var(--text);margin-bottom:8px">' +
-      'Sent: <b style="color:var(--green)">' + d.sent + '</b> | ' +
-      'Failed: <b style="color:var(--red)">' + d.failed + '</b> | ' +
-      'Total: <b>' + d.total + '</b>' +
-    '</div>' +
-    '<div style="width:100%;height:8px;background:var(--card2);border-radius:10px;overflow:hidden;margin-bottom:10px">' +
-      '<div style="width:' + d.pct + '%;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .3s"></div>' +
-    '</div>' +
-    (d.lastLog && d.lastLog.length ? '<div style="font-size:10px;color:var(--text2);margin-bottom:8px">' + d.lastLog.join('<br>') + '</div>' : '') +
-    (d.running
-      ? '<div>' + pauseBtn + ' <button class="act-btn act-reject" onclick="stopBroadcastServer()">⏹️ Stop</button></div>'
-      : '');
+function renderBroadcastStatus(d){
+  var statusBox=document.getElementById('bcStatusBox');
+  if(!statusBox)return;
+  if(!d.running&&d.total===0){statusBox.style.display='none';return;}
+  statusBox.style.display='block';
+  var pauseBtn=d.paused
+    ?'<button class="act-btn act-approve" onclick="resumeBroadcast()">▶️ Resume</button>'
+    :'<button class="act-btn act-edit" onclick="pauseBroadcast()">⏸️ Pause</button>';
+  var statusLabel=d.paused
+    ?'<div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:6px">⏸️ Broadcast Paused</div>'
+    :d.running
+      ?'<div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:6px">🚀 Live on Server: '+d.pct+'%</div>'
+      :'<div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:6px">✅ Broadcast Complete</div>';
+  statusBox.innerHTML=statusLabel+
+    '<div style="font-size:11px;color:var(--text);margin-bottom:8px">Sent: <b style="color:var(--green)">'+d.sent+'</b> | Failed: <b style="color:var(--red)">'+d.failed+'</b> | Total: <b>'+d.total+'</b></div>'+
+    '<div style="width:100%;height:8px;background:var(--card2);border-radius:10px;overflow:hidden;margin-bottom:10px"><div style="width:'+d.pct+'%;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .3s"></div></div>'+
+    (d.lastLog&&d.lastLog.length?'<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+d.lastLog.join('<br>')+'</div>':'')+
+    (d.running?'<div>'+pauseBtn+' <button class="act-btn act-reject" onclick="stopBroadcastServer()">⏹️ Stop</button></div>':'');
 }
-
-async function pauseBroadcast() {
-  await fetch(RAILWAY_URL + '/broadcast/pause', { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY } });
-  toast('⏸️ Paused', 'info');
-}
-async function resumeBroadcast() {
-  await fetch(RAILWAY_URL + '/broadcast/resume', { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY } });
-  toast('▶️ Resumed', 'info');
-}
-async function stopBroadcastServer() {
-  await fetch(RAILWAY_URL + '/broadcast/stop', { method: 'POST', headers: { 'X-Admin-Key': ADMIN_KEY } });
-  toast('⏹️ Stopped', 'info');
-  clearInterval(bcPollTimer);
-  bcPollTimer = null;
+async function pauseBroadcast(){await fetch(RAILWAY_URL+'/broadcast/pause',{method:'POST',headers:{'X-Admin-Key':ADMIN_KEY}});toast('⏸️ Paused','info');}
+async function resumeBroadcast(){await fetch(RAILWAY_URL+'/broadcast/resume',{method:'POST',headers:{'X-Admin-Key':ADMIN_KEY}});toast('▶️ Resumed','info');}
+async function stopBroadcastServer(){
+  await fetch(RAILWAY_URL+'/broadcast/stop',{method:'POST',headers:{'X-Admin-Key':ADMIN_KEY}});
+  toast('⏹️ Stopped','info');clearInterval(bcPollTimer);bcPollTimer=null;
 }
 
 /* ═══════════ INIT ═══════════ */
@@ -1344,4 +1420,3 @@ resetAuto();
 </script>
 </body>
 </html>
-
